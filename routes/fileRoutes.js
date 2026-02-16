@@ -20,5 +20,29 @@ router.get(
   authMiddleware,
   fileController.getFiles
 );
+// Download file
+router.get(
+  "/download/:id",
+  authMiddleware,
+  fileController.downloadFile
+);
+// Advanced Filter Route
+router.get(
+  "/filter",
+  authMiddleware,
+  fileController.filterFiles
+);
+// Delete File
+router.delete(
+  "/:id",
+  authMiddleware,
+  fileController.deleteFile
+);
+// Inline View
+router.get(
+  "/view/:id",
+  authMiddleware,
+  fileController.viewFile
+);
 
 module.exports = router;

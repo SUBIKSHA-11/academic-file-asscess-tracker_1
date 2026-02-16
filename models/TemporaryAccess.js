@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const activityLogSchema = new mongoose.Schema({
+const temporaryAccessSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -11,14 +11,10 @@ const activityLogSchema = new mongoose.Schema({
     ref: "AcademicFile",
     required: true
   },
-  action: {
-    type: String,
-    enum: ["UPLOAD", "DOWNLOAD", "VIEW", "DELETE"],
+  expiresAt: {
+    type: Date,
     required: true
-  },
-  ipAddress: {
-    type: String
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model("ActivityLog", activityLogSchema);
+module.exports = mongoose.model("TemporaryAccess", temporaryAccessSchema);
