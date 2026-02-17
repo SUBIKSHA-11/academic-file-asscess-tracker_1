@@ -5,6 +5,7 @@ import Files from "./pages/Files";
 import AccessLogs from "./pages/AccessLogs";
 import Suspicious from "./pages/Suspicious";
 import Layout from "./layout/Layout";
+import UsersPage from "./pages/Users";
 
 function App() {
   return (
@@ -27,6 +28,10 @@ function App() {
         <Route path="/suspicious" element={
           <Layout><Suspicious /></Layout>
         } />
+        <Route path="/users" element={
+  <Layout><UsersPage /></Layout>
+} />
+
       </Routes>
     </BrowserRouter>
   );

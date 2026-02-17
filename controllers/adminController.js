@@ -113,6 +113,68 @@ const grantTemporaryAccess = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
+
+const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    if (!["ADMIN", "FACULTY", "STUDENT"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "Role updated", user });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update role" });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete user" });
+  }
+};
+const ActivityLog = require("../models/ActivityLog");
+
+const getAllLogs = async (req, res) => {
+  try {
+    const logs = await ActivityLog.find()
+      .populate("user", "name role")
+      .populate("file", "fileName")
+      .sort({ createdAt: -1 });
+
+    res.json(logs);
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch logs" });
+  }
+};
+
 
 module.exports = {
   getDashboardStats,
@@ -120,6 +182,11 @@ module.exports = {
   getCategoryDistribution,
   getDepartmentDistribution,
   getAlerts,
-  grantTemporaryAccess
+  grantTemporaryAccess,
+  getAllUsers,
+  updateUserRole,
+  deleteUser,
+  getAllLogs
 };
+
 

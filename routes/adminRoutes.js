@@ -5,7 +5,6 @@ const adminController = require("../controllers/adminController");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 
-// Protect all admin routes
 router.use(authMiddleware, roleMiddleware(["ADMIN"]));
 
 router.get("/stats", adminController.getDashboardStats);
@@ -14,5 +13,11 @@ router.get("/category-distribution", adminController.getCategoryDistribution);
 router.get("/department-distribution", adminController.getDepartmentDistribution);
 router.get("/alerts", adminController.getAlerts);
 router.post("/grant-access", adminController.grantTemporaryAccess);
+router.get("/logs", adminController.getAllLogs);
+
+/* NEW ROUTES */
+router.get("/users", adminController.getAllUsers);
+router.patch("/users/:id/role", adminController.updateUserRole);
+router.delete("/users/:id", adminController.deleteUser);
 
 module.exports = router;

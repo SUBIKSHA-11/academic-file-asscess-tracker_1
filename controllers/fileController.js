@@ -3,7 +3,11 @@ const ActivityLog = require("../models/ActivityLog");
 const Alert = require("../models/Alert");
 const TemporaryAccess = require("../models/TemporaryAccess");
 const path = require("path");
-// Upload File
+const fs = require("fs");
+
+// =============================
+// UPLOAD FILE
+// =============================
 const uploadFile = async (req, res) => {
   try {
     const {
@@ -35,6 +39,14 @@ const uploadFile = async (req, res) => {
       uploadedBy: req.user.userId
     });
 
+    // 🔥 Log Upload Activity
+    await ActivityLog.create({
+      user: req.user.userId,
+      file: newFile._id,
+      action: "UPLOAD",
+      ipAddress: req.ip
+    });
+
     res.status(201).json({
       message: "File uploaded and saved successfully",
       file: newFile
@@ -46,8 +58,9 @@ const uploadFile = async (req, res) => {
   }
 };
 
-// Get Files
-// Get Files with Pagination
+// =============================
+// GET FILES WITH PAGINATION
+// =============================
 const getFiles = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
@@ -58,7 +71,6 @@ const getFiles = async (req, res) => {
 
     let filter = {};
 
-    // Sensitivity restriction
     if (req.user.role === "FACULTY") {
       filter.sensitivity = { $in: ["PUBLIC", "INTERNAL"] };
     }
@@ -88,14 +100,15 @@ const getFiles = async (req, res) => {
   }
 };
 
-// Advanced Filter API
+// =============================
+// FILTER FILES
+// =============================
 const filterFiles = async (req, res) => {
   try {
     const { category, year, department, semester, subject } = req.query;
 
     let filter = {};
 
-    // Sensitivity restriction based on role
     if (req.user.role === "FACULTY") {
       filter.sensitivity = { $in: ["PUBLIC", "INTERNAL"] };
     }
@@ -104,14 +117,14 @@ const filterFiles = async (req, res) => {
       filter.sensitivity = "PUBLIC";
     }
 
-    // Apply filters dynamically
     if (category) filter.category = category;
     if (year) filter.year = Number(year);
     if (department) filter.department = department;
     if (semester) filter.semester = Number(semester);
     if (subject) filter.subject = subject;
 
-    const files = await AcademicFile.find(filter).populate("uploadedBy", "name role");
+    const files = await AcademicFile.find(filter)
+      .populate("uploadedBy", "name role");
 
     res.json(files);
 
@@ -121,69 +134,60 @@ const filterFiles = async (req, res) => {
   }
 };
 
-
-// Download File
+// =============================
+// DOWNLOAD FILE
+// =============================
 const downloadFile = async (req, res) => {
   try {
-    const fileId = req.params.id;
-    const file = await AcademicFile.findById(fileId);
+    const file = await AcademicFile.findById(req.params.id);
 
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
-    // Check Temporary Access
-const tempAccess = await TemporaryAccess.findOne({
-  user: req.user.userId,
-  file: file._id,
-  expiresAt: { $gt: new Date() }
-});
 
-const hasTempAccess = !!tempAccess;
+    const tempAccess = await TemporaryAccess.findOne({
+      user: req.user.userId,
+      file: file._id,
+      expiresAt: { $gt: new Date() }
+    });
 
+    const hasTempAccess = !!tempAccess;
 
-    // Access Control
-  if (req.user.role === "STUDENT" && file.sensitivity !== "PUBLIC" && !hasTempAccess) {
-  return res.status(403).json({ message: "Access denied" });
-}
+    if (
+      (req.user.role === "STUDENT" && file.sensitivity !== "PUBLIC" && !hasTempAccess) ||
+      (req.user.role === "FACULTY" && file.sensitivity === "CONFIDENTIAL" && !hasTempAccess)
+    ) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
-if (req.user.role === "FACULTY" && file.sensitivity === "CONFIDENTIAL" && !hasTempAccess) {
-  return res.status(403).json({ message: "Access denied" });
-}
-
-
-    // Increment download count
     file.downloadCount += 1;
     await file.save();
 
-    // Log activity
     await ActivityLog.create({
       user: req.user.userId,
       file: file._id,
       action: "DOWNLOAD",
       ipAddress: req.ip
     });
-// Suspicious Activity Detection
-const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
 
-const recentDownloads = await ActivityLog.countDocuments({
-  user: req.user.userId,
-  action: "DOWNLOAD",
-  createdAt: { $gte: twoMinutesAgo }
-});
+    // Suspicious Detection
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
 
-if (recentDownloads >= 5) {
-  await Alert.create({
-    user: req.user.userId,
-    reason: "Multiple downloads within short time",
-    severity: "HIGH"
-  });
-}
+    const recentDownloads = await ActivityLog.countDocuments({
+      user: req.user.userId,
+      action: "DOWNLOAD",
+      createdAt: { $gte: twoMinutesAgo }
+    });
 
-    // Correct file path
+    if (recentDownloads >= 5) {
+      await Alert.create({
+        user: req.user.userId,
+        reason: "Multiple downloads within short time",
+        severity: "HIGH"
+      });
+    }
+
     const fileFullPath = path.join(__dirname, "..", file.filePath);
-
-    console.log("Downloading:", fileFullPath);
-
     res.download(fileFullPath, file.fileName);
 
   } catch (error) {
@@ -191,30 +195,28 @@ if (recentDownloads >= 5) {
     res.status(500).json({ message: "Download failed" });
   }
 };
-// Delete File with Access Control
+
+// =============================
+// DELETE FILE
+// =============================
 const deleteFile = async (req, res) => {
   try {
-    const fileId = req.params.id;
-
-    const file = await AcademicFile.findById(fileId);
+    const file = await AcademicFile.findById(req.params.id);
 
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
 
-    // STUDENT cannot delete
     if (req.user.role === "STUDENT") {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    // FACULTY can delete only own file
-    if (req.user.role === "FACULTY" && file.uploadedBy.toString() !== req.user.userId) {
+    if (
+      req.user.role === "FACULTY" &&
+      file.uploadedBy.toString() !== req.user.userId
+    ) {
       return res.status(403).json({ message: "You can delete only your own files" });
     }
-
-    // Delete physical file
-    const fs = require("fs");
-    const path = require("path");
 
     const fileFullPath = path.join(__dirname, "..", file.filePath);
 
@@ -222,7 +224,6 @@ const deleteFile = async (req, res) => {
       fs.unlinkSync(fileFullPath);
     }
 
-    // Log activity
     await ActivityLog.create({
       user: req.user.userId,
       file: file._id,
@@ -230,8 +231,7 @@ const deleteFile = async (req, res) => {
       ipAddress: req.ip
     });
 
-    // Delete from DB
-    await AcademicFile.findByIdAndDelete(fileId);
+    await AcademicFile.findByIdAndDelete(req.params.id);
 
     res.json({ message: "File deleted successfully" });
 
@@ -240,38 +240,32 @@ const deleteFile = async (req, res) => {
     res.status(500).json({ message: "Delete failed" });
   }
 };
-// View File Inline
+
+// =============================
+// VIEW FILE
+// =============================
 const viewFile = async (req, res) => {
   try {
-    const fileId = req.params.id;
-
-    const file = await AcademicFile.findById(fileId);
+    const file = await AcademicFile.findById(req.params.id);
 
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
-    // Check Temporary Access
-const tempAccess = await TemporaryAccess.findOne({
-  user: req.user.userId,
-  file: file._id,
-  expiresAt: { $gt: new Date() }
-});
 
-const hasTempAccess = !!tempAccess;
+    const tempAccess = await TemporaryAccess.findOne({
+      user: req.user.userId,
+      file: file._id,
+      expiresAt: { $gt: new Date() }
+    });
 
+    const hasTempAccess = !!tempAccess;
 
-    // Sensitivity Rules
-  if (req.user.role === "STUDENT" && file.sensitivity !== "PUBLIC" && !hasTempAccess) {
-  return res.status(403).json({ message: "Access denied" });
-}
-
-if (req.user.role === "FACULTY" && file.sensitivity === "CONFIDENTIAL" && !hasTempAccess) {
-  return res.status(403).json({ message: "Access denied" });
-}
-
-
-    const fs = require("fs");
-    const path = require("path");
+    if (
+      (req.user.role === "STUDENT" && file.sensitivity !== "PUBLIC" && !hasTempAccess) ||
+      (req.user.role === "FACULTY" && file.sensitivity === "CONFIDENTIAL" && !hasTempAccess)
+    ) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const fileFullPath = path.join(__dirname, "..", file.filePath);
 
@@ -279,7 +273,6 @@ if (req.user.role === "FACULTY" && file.sensitivity === "CONFIDENTIAL" && !hasTe
       return res.status(404).json({ message: "Physical file not found" });
     }
 
-    // Log VIEW action
     await ActivityLog.create({
       user: req.user.userId,
       file: file._id,
@@ -287,7 +280,6 @@ if (req.user.role === "FACULTY" && file.sensitivity === "CONFIDENTIAL" && !hasTe
       ipAddress: req.ip
     });
 
-    // Set header for inline view
     res.setHeader("Content-Disposition", `inline; filename="${file.fileName}"`);
     res.sendFile(fileFullPath);
 
@@ -305,4 +297,3 @@ module.exports = {
   deleteFile,
   viewFile
 };
-
