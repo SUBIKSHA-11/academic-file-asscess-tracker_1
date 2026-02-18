@@ -5,41 +5,43 @@ import {
   Download,
   Eye,
   Trash2,
-  Filter
+  Filter,
+  Upload
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import Pagination from "../components/Pagination";
+import { useNavigate } from "react-router-dom";
 
-function AcademicFiles() {
+function Files() {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const [files, setFiles] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
-const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const limit = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 5;
 
- useEffect(() => {
-  fetchFiles(currentPage);
-}, [currentPage]);
+  useEffect(() => {
+    fetchFiles(currentPage);
+  }, [currentPage]);
 
-const fetchFiles = async (page = 1) => {
-  try {
-    const res = await axios.get(`/files?page=${page}&limit=${limit}`);
-    setFiles(res.data.files);
-    setTotalPages(res.data.totalPages);
-    setCurrentPage(res.data.currentPage);
-  } catch (err) {
-    console.error(err);
-  }
-};
-
+  const fetchFiles = async (page = 1) => {
+    try {
+      const res = await axios.get(`/files?page=${page}&limit=${limit}`);
+      setFiles(res.data.files || []);
+      setTotalPages(res.data.totalPages || 1);
+      setCurrentPage(res.data.currentPage || 1);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/files/${id}`);
-      fetchFiles();
+      fetchFiles(currentPage);
     } catch (err) {
       console.error(err);
     }
@@ -49,14 +51,63 @@ const fetchFiles = async (page = 1) => {
     file.fileName.toLowerCase().includes(search.toLowerCase()) &&
     (category ? file.category === category : true)
   );
+const handleDownload = async (id, fileName) => {
+  try {
+    const res = await axios.get(`/files/download/${id}`, {
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error("Download failed", error);
+  }
+};
+
+const handleView = async (id) => {
+  try {
+    const res = await axios.get(`/files/view/${id}`, {
+      responseType: "blob",
+    });
+
+    const file = new Blob([res.data], { type: "application/pdf" });
+    const fileURL = window.URL.createObjectURL(file);
+
+    window.open(fileURL, "_blank");
+
+  } catch (error) {
+    console.error("View failed", error);
+  }
+};
+
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">Academic Files</h2>
+      <h2 className="text-2xl font-semibold mb-6">
+        Academic Files
+      </h2>
+
+      {/* Upload Button for ADMIN & FACULTY */}
+      {(user?.role === "ADMIN" || user?.role === "FACULTY") && (
+        <div className="mb-6">
+          <button
+            onClick={() => navigate("/upload")}
+            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:opacity-90"
+          >
+            <Upload size={18} />
+            Upload File
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
-      <div className="flex justify-between mb-6">
-        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-md w-1/3">
+      <div className="flex justify-between mb-6 flex-wrap gap-4">
+        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-md w-64">
           <Search size={18} className="text-gray-400" />
           <input
             type="text"
@@ -78,13 +129,15 @@ const fetchFiles = async (page = 1) => {
             <option value="NOTES">NOTES</option>
             <option value="LAB">LAB</option>
             <option value="QUESTION_PAPER">QUESTION_PAPER</option>
+            <option value="ASSIGNMENT">ASSIGNMENT</option>
+            <option value="MARKSHEET">MARKSHEET</option>
+            <option value="OTHER">OTHER</option>
           </select>
         </div>
       </div>
 
       {/* Table */}
-     <div className="bg-white rounded-xl shadow-md overflow-x-auto">
-
+      <div className="bg-white rounded-xl shadow-md overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
             <tr>
@@ -113,31 +166,26 @@ const fetchFiles = async (page = 1) => {
                 <td className="p-3">{file.downloadCount}</td>
 
                 <td className="p-3 flex justify-center gap-3">
-                  {/* View */}
-                  <button
-                    onClick={() =>
-                      window.open(
-                        `http://localhost:5000/api/files/view/${file._id}`
-                      )
-                    }
-                    className="text-blue-500 hover:text-blue-700"
-                  >
-                    <Eye size={18} />
-                  </button>
 
-                  {/* Download */}
-                  <button
-                    onClick={() =>
-                      window.open(
-                        `http://localhost:5000/api/files/download/${file._id}`
-                      )
-                    }
-                    className="text-orange-500 hover:text-orange-700"
-                  >
-                    <Download size={18} />
-                  </button>
+                  {/* VIEW - ALL ROLES */}
+          <button
+  onClick={() => handleView(file._id)}
+  className="text-blue-500 hover:text-blue-700"
+>
+  <Eye size={18} />
+</button>
 
-                  {/* Delete - Only Admin & Faculty */}
+
+                  {/* DOWNLOAD - ALL ROLES */}
+                  <button
+  onClick={() => handleDownload(file._id, file.fileName)}
+  className="text-orange-500 hover:text-orange-700"
+>
+  <Download size={18} />
+</button>
+
+
+                  {/* DELETE - ADMIN always, FACULTY own file */}
                   {(user?.role === "ADMIN" ||
                     (user?.role === "FACULTY" &&
                       file.uploadedBy?._id === user._id)) && (
@@ -148,19 +196,22 @@ const fetchFiles = async (page = 1) => {
                       <Trash2 size={18} />
                     </button>
                   )}
+
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
       <Pagination
-  currentPage={currentPage}
-  totalPages={totalPages}
-  onPageChange={setCurrentPage}
-/>
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }
 
-export default AcademicFiles;
+export default Files;

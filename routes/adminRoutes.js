@@ -13,7 +13,9 @@ router.get("/category-distribution", adminController.getCategoryDistribution);
 router.get("/department-distribution", adminController.getDepartmentDistribution);
 router.get("/alerts", adminController.getAlerts);
 router.post("/grant-access", adminController.grantTemporaryAccess);
-router.get("/logs", adminController.getAllLogs);
+router.get("/recent-activity", adminController.getRecentActivity);
+router.get("/monthly-uploads", adminController.getMonthlyUploads);
+router.get("/logs", adminController.getLogs);
 
 /* NEW ROUTES */
 router.get("/users", adminController.getAllUsers);

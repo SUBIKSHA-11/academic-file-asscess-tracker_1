@@ -35,24 +35,35 @@ function Dashboard() {
   const [stats, setStats] = useState({});
   const [categoryData, setCategoryData] = useState([]);
   const [departmentData, setDepartmentData] = useState([]);
+const [topFiles, setTopFiles] = useState([]);
+const [recentActivity, setRecentActivity] = useState([]);
+const [monthlyData, setMonthlyData] = useState([]);
 
   useEffect(() => {
     fetchDashboard();
   }, []);
 
   const fetchDashboard = async () => {
-    try {
-      const statsRes = await axios.get("/admin/stats");
-      const catRes = await axios.get("/admin/category-distribution");
-      const deptRes = await axios.get("/admin/department-distribution");
+  try {
+    const statsRes = await axios.get("/admin/stats");
+    const catRes = await axios.get("/admin/category-distribution");
+    const deptRes = await axios.get("/admin/department-distribution");
+    const topFilesRes = await axios.get("/admin/top-files");
+    const recentRes = await axios.get("/admin/recent-activity");
+    const monthlyRes = await axios.get("/admin/monthly-uploads");
 
-      setStats(statsRes.data);
-      setCategoryData(catRes.data);
-      setDepartmentData(deptRes.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    setStats(statsRes.data);
+    setCategoryData(catRes.data);
+    setDepartmentData(deptRes.data);
+    setTopFiles(topFilesRes.data);
+    setRecentActivity(recentRes.data);
+    setMonthlyData(monthlyRes.data);
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 
   const categoryChart = {
     labels: categoryData.map((c) => c._id),
@@ -129,6 +140,60 @@ function Dashboard() {
           </h3>
           <Bar data={departmentChart} />
         </div>
+        <div className="bg-white p-6 rounded-xl shadow-md mt-8">
+  <h3 className="mb-4 font-semibold">Top Downloaded Files</h3>
+  <Bar
+    data={{
+      labels: topFiles.map(f => f.fileName),
+      datasets: [{
+        label: "Downloads",
+        data: topFiles.map(f => f.downloadCount),
+        backgroundColor: "#ef4444"
+      }]
+    }}
+  />
+</div>
+<div className="bg-white p-6 rounded-xl shadow-md mt-8">
+  <h3 className="mb-4 font-semibold">Monthly Upload Trend</h3>
+  <Bar
+    data={{
+      labels: monthlyData.map(m => `Month ${m._id}`),
+      datasets: [{
+        label: "Uploads",
+        data: monthlyData.map(m => m.count),
+        backgroundColor: "#3b82f6"
+      }]
+    }}
+  />
+</div>
+<div className="bg-white p-6 rounded-xl shadow-md mt-8">
+  <h3 className="mb-4 font-semibold">Recent Activity</h3>
+
+  <table className="w-full text-sm">
+    <thead className="bg-gray-100">
+      <tr>
+        <th className="p-2 text-left">User</th>
+        <th className="p-2 text-left">Action</th>
+        <th className="p-2 text-left">File</th>
+        <th className="p-2 text-left">Time</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {recentActivity.map(log => (
+        <tr key={log._id} className="border-b">
+          <td className="p-2">{log.user?.name}</td>
+          <td className="p-2">{log.action}</td>
+          <td className="p-2">{log.file?.fileName}</td>
+          <td className="p-2">
+            {new Date(log.createdAt).toLocaleString()}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
       </div>
     </div>
   );

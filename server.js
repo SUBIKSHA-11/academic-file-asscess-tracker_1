@@ -14,7 +14,11 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 app.use(morgan("dev"));
-
+// Disable caching for API responses
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
 // Static file access
 app.use("/uploads", express.static("uploads"));
 

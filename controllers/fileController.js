@@ -279,7 +279,7 @@ const viewFile = async (req, res) => {
       action: "VIEW",
       ipAddress: req.ip
     });
-
+    res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="${file.fileName}"`);
     res.sendFile(fileFullPath);
 

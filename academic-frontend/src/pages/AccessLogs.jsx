@@ -1,59 +1,95 @@
 import { useEffect, useState } from "react";
 import axios from "../api/axios";
-import {
-  Search,
-  Activity
-} from "lucide-react";
+import Pagination from "../components/Pagination";
 
 function AccessLogs() {
+
   const [logs, setLogs] = useState([]);
-  const [search, setSearch] = useState("");
+  const [action, setAction] = useState("ALL");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const limit = 10;
 
   useEffect(() => {
     fetchLogs();
-  }, []);
+  }, [action, fromDate, toDate, currentPage]);
 
   const fetchLogs = async () => {
     try {
-      const res = await axios.get("/admin/logs");
-      setLogs(res.data);
-    } catch (err) {}
-  };
+      const res = await axios.get("/admin/logs", {
+        params: {
+          action,
+          from: fromDate,
+          to: toDate,
+          page: currentPage,
+          limit
+        }
+      });
 
-  const filteredLogs = logs.filter((log) =>
-    log.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    log.action?.toLowerCase().includes(search.toLowerCase())
-  );
+      setLogs(res.data.logs);
+      setTotalPages(res.data.totalPages);
 
-  const getActionColor = (action) => {
-    switch (action) {
-      case "UPLOAD":
-        return "text-green-600";
-      case "DOWNLOAD":
-        return "text-orange-600";
-      case "DELETE":
-        return "text-red-600";
-      case "VIEW":
-        return "text-blue-600";
-      default:
-        return "text-gray-600";
+    } catch (err) {
+      console.error(err);
     }
   };
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">Access Logs</h2>
 
-      {/* Search */}
-      <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-md w-1/3 mb-6">
-        <Search size={18} className="text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search by user or action..."
-          className="outline-none w-full"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <h2 className="text-2xl font-semibold mb-6">
+        Access Logs
+      </h2>
+
+      {/* Filters */}
+      <div className="flex gap-4 mb-6 flex-wrap">
+
+        <select
+          value={action}
+          onChange={(e) => {
+            setCurrentPage(1);
+            setAction(e.target.value);
+          }}
+          className="border p-2 rounded"
+        >
+          <option value="ALL">All Actions</option>
+          <option value="UPLOAD">UPLOAD</option>
+          <option value="DOWNLOAD">DOWNLOAD</option>
+          <option value="VIEW">VIEW</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+
+        <div className="flex flex-col">
+  <label className="text-sm mb-1">From Date</label>
+  <input
+    type="date"
+    value={fromDate}
+    onChange={(e) => {
+      setCurrentPage(1);
+      setFromDate(e.target.value);
+    }}
+    className="border p-2 rounded"
+  />
+</div>
+
+<div className="flex flex-col">
+  <label className="text-sm mb-1">To Date</label>
+  <input
+    type="date"
+    value={toDate}
+    onChange={(e) => {
+      setCurrentPage(1);
+      setToDate(e.target.value);
+    }}
+    className="border p-2 rounded"
+  />
+</div>
+
+
       </div>
 
       {/* Table */}
@@ -65,26 +101,19 @@ function AccessLogs() {
               <th className="p-3 text-left">Role</th>
               <th className="p-3 text-left">Action</th>
               <th className="p-3 text-left">File</th>
-              <th className="p-3 text-left">IP Address</th>
               <th className="p-3 text-left">Time</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredLogs.map((log) => (
+            {logs.map((log) => (
               <tr key={log._id} className="border-b hover:bg-gray-50">
                 <td className="p-3">{log.user?.name}</td>
                 <td className="p-3">{log.user?.role}</td>
-
-                <td className={`p-3 font-semibold ${getActionColor(log.action)}`}>
-                  <div className="flex items-center gap-2">
-                    <Activity size={14} />
-                    {log.action}
-                  </div>
+                <td className="p-3 font-semibold">
+                  {log.action}
                 </td>
-
                 <td className="p-3">{log.file?.fileName}</td>
-                <td className="p-3">{log.ipAddress}</td>
                 <td className="p-3">
                   {new Date(log.createdAt).toLocaleString()}
                 </td>
@@ -93,6 +122,15 @@ function AccessLogs() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+      
+
     </div>
   );
 }

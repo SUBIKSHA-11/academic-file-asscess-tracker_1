@@ -5,7 +5,16 @@ const jwt = require("jsonwebtoken");
 // REGISTER
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, department } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      department,
+      facultyId,
+      studentId,
+      year
+    } = req.body;
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -14,15 +23,20 @@ const register = async (req, res) => {
       email,
       password: hashed,
       role,
-      department
+      department,
+      facultyId,
+      studentId,
+      year
     });
 
-    res.json(user);
+    res.status(201).json(user);
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Registration failed" });
   }
 };
+
 
 // LOGIN
 const login = async (req, res) => {

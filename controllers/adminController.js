@@ -81,15 +81,31 @@ const getDepartmentDistribution = async (req, res) => {
 // Get Alerts
 const getAlerts = async (req, res) => {
   try {
-    const alerts = await Alert.find().populate("user", "name email role");
+    const alerts = await Alert.find()
+      .populate("user", "name role")
+      .sort({ createdAt: -1 });
 
-    res.json(alerts);
+    const high = alerts.filter(a => a.severity === "HIGH").length;
+    const medium = alerts.filter(a => a.severity === "MEDIUM").length;
+    const low = alerts.filter(a => a.severity === "LOW").length;
+
+    const uniqueUsers = [...new Set(alerts.map(a => a.user?._id?.toString()))].length;
+
+    res.json({
+      alerts,
+      summary: {
+        high,
+        medium,
+        low,
+        uniqueUsers
+      }
+    });
 
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to fetch alerts" });
   }
 };
+
 const TemporaryAccess = require("../models/TemporaryAccess");
 
 // Grant Temporary Access
@@ -161,17 +177,84 @@ const deleteUser = async (req, res) => {
 };
 const ActivityLog = require("../models/ActivityLog");
 
-const getAllLogs = async (req, res) => {
+const getLogs = async (req, res) => {
+  try {
+    const {
+      action,
+      from,
+      to,
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    const filter = {};
+
+    // Action filter
+    if (action && action !== "ALL") {
+      filter.action = action;
+    }
+
+    // Date range filter
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const totalLogs = await ActivityLog.countDocuments(filter);
+
+    const logs = await ActivityLog.find(filter)
+      .populate("user", "name role")
+      .populate("file", "fileName")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    res.json({
+      logs,
+      totalLogs,
+      totalPages: Math.ceil(totalLogs / limit),
+      currentPage: Number(page)
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch logs" });
+  }
+};
+
+const getRecentActivity = async (req, res) => {
   try {
     const logs = await ActivityLog.find()
       .populate("user", "name role")
       .populate("file", "fileName")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(5);
 
     res.json(logs);
 
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch logs" });
+    res.status(500).json({ message: "Failed to fetch activity" });
+  }
+};
+
+const getMonthlyUploads = async (req, res) => {
+  try {
+    const result = await AcademicFile.aggregate([
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    res.json(result);
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch monthly data" });
   }
 };
 
@@ -186,7 +269,9 @@ module.exports = {
   getAllUsers,
   updateUserRole,
   deleteUser,
-  getAllLogs
+  getRecentActivity,
+  getMonthlyUploads,
+  getLogs
 };
 
 
