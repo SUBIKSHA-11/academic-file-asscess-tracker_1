@@ -10,6 +10,7 @@ import Upload from "./pages/Upload";
 import AdminList from "./pages/users/AdminList";
 import FacultyList from "./pages/users/FacultyList";
 import StudentList from "./pages/users/StudentList";
+import Departments from "./pages/Departments";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
@@ -86,6 +87,16 @@ function App() {
 <Route path="/users/admins" element={<Layout><AdminList /></Layout>} />
 <Route path="/users/faculty" element={<Layout><FacultyList /></Layout>} />
 <Route path="/users/students" element={<Layout><StudentList /></Layout>} />
+<Route
+  path="/departments"
+  element={
+    <ProtectedRoute>
+      <RoleRoute allowedRoles={["ADMIN"]}>
+        <Layout><Departments /></Layout>
+      </RoleRoute>
+    </ProtectedRoute>
+  }
+/>
 
       </Routes>
     </BrowserRouter>

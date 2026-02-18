@@ -1,75 +1,134 @@
 import { useEffect, useState } from "react";
 import axios from "../api/axios";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Search, CheckCircle, Trash2 } from "lucide-react";
 
 function Suspicious() {
-
   const [alerts, setAlerts] = useState([]);
-  const [summary, setSummary] = useState({
-    high: 0,
-    medium: 0,
-    low: 0,
-    uniqueUsers: 0
-  });
+  const [search, setSearch] = useState("");
+  const [severity, setSeverity] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   useEffect(() => {
     fetchAlerts();
-  }, []);
+  }, [severity, fromDate, toDate]);
 
   const fetchAlerts = async () => {
     try {
-      const res = await axios.get("/admin/alerts");
-      setAlerts(res.data.alerts);
-      setSummary(res.data.summary);
+      const res = await axios.get("/admin/alerts", {
+        params: {
+          severity,
+          from: fromDate,
+          to: toDate
+        }
+      });
+
+      setAlerts(res.data);
     } catch (err) {
       console.error(err);
     }
   };
 
+  const markReviewed = async (id) => {
+    await axios.patch(`/admin/alerts/${id}/review`);
+    fetchAlerts();
+  };
+
+  const deleteAlert = async (id) => {
+    await axios.delete(`/admin/alerts/${id}`);
+    fetchAlerts();
+  };
+
+  const filteredAlerts = alerts.filter((alert) =>
+    alert.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    alert.reason?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const getSeverityStyle = (severity) => {
+    switch (severity) {
+      case "HIGH":
+        return "bg-red-100 text-red-700";
+      case "MEDIUM":
+        return "bg-orange-100 text-orange-700";
+      case "LOW":
+        return "bg-yellow-100 text-yellow-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
   return (
     <div>
-
       <h2 className="text-2xl font-semibold mb-6">
-        Security Alerts
+        Suspicious Activity
       </h2>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-6">
 
-        <Card label="High Alerts" value={summary.high} color="bg-red-500" />
-        <Card label="Medium Alerts" value={summary.medium} color="bg-orange-500" />
-        <Card label="Low Alerts" value={summary.low} color="bg-yellow-500" />
-        <Card label="Users Flagged" value={summary.uniqueUsers} color="bg-blue-500" />
+        {/* Search */}
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-md">
+          <Search size={18} />
+          <input
+            type="text"
+            placeholder="Search user or reason..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="outline-none"
+          />
+        </div>
+
+        {/* Severity Filter */}
+        <select
+          value={severity}
+          onChange={(e) => setSeverity(e.target.value)}
+          className="border p-2 rounded"
+        >
+          <option value="">All Severity</option>
+          <option value="HIGH">HIGH</option>
+          <option value="MEDIUM">MEDIUM</option>
+          <option value="LOW">LOW</option>
+        </select>
+
+        {/* Date Filters */}
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className="border p-2 rounded"
+        />
+
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          className="border p-2 rounded"
+        />
 
       </div>
 
-      {/* Alerts Table */}
+      {/* Table */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
             <tr>
               <th className="p-3 text-left">User</th>
-              <th className="p-3 text-left">Role</th>
               <th className="p-3 text-left">Reason</th>
               <th className="p-3 text-left">Severity</th>
+              <th className="p-3 text-left">Status</th>
               <th className="p-3 text-left">Time</th>
+              <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {alerts.map((alert) => (
+            {filteredAlerts.map((alert) => (
               <tr
                 key={alert._id}
-                className={`border-b hover:bg-gray-50 ${
-                  alert.severity === "HIGH" ? "bg-red-50" : ""
-                }`}
+                className="border-b hover:bg-gray-50"
               >
                 <td className="p-3 font-medium">
                   {alert.user?.name}
-                </td>
-
-                <td className="p-3">
-                  {alert.user?.role}
                 </td>
 
                 <td className="p-3 flex items-center gap-2">
@@ -78,37 +137,56 @@ function Suspicious() {
                 </td>
 
                 <td className="p-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    alert.severity === "HIGH"
-                      ? "bg-red-100 text-red-700"
-                      : alert.severity === "MEDIUM"
-                      ? "bg-orange-100 text-orange-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getSeverityStyle(alert.severity)}`}
+                  >
                     {alert.severity}
                   </span>
                 </td>
 
                 <td className="p-3">
+                  {alert.reviewed ? (
+                    <span className="text-green-600 font-semibold">
+                      Reviewed
+                    </span>
+                  ) : (
+                    <span className="text-red-600 font-semibold">
+                      Pending
+                    </span>
+                  )}
+                </td>
+
+                <td className="p-3">
                   {new Date(alert.createdAt).toLocaleString()}
                 </td>
+
+                <td className="p-3 flex justify-center gap-4">
+
+                  {!alert.reviewed && (
+                    <button
+                      onClick={() => markReviewed(alert._id)}
+                      className="text-green-600 hover:text-green-800"
+                      title="Mark as Reviewed"
+                    >
+                      <CheckCircle size={18} />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => deleteAlert(alert._id)}
+                    className="text-red-500 hover:text-red-700"
+                    title="Delete Alert"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+
+                </td>
+
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-    </div>
-  );
-}
-
-function Card({ label, value, color }) {
-  return (
-    <div className={`${color} text-white p-6 rounded-xl shadow-md`}>
-      <h4 className="text-sm opacity-90">{label}</h4>
-      <p className="text-2xl font-bold mt-2">
-        {value}
-      </p>
     </div>
   );
 }

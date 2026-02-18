@@ -18,13 +18,11 @@ const userSchema = new mongoose.Schema(
 
     facultyId: {
       type: String,
-      unique: true,
       sparse: true,
     },
 
     studentId: {
       type: String,
-      unique: true,
       sparse: true,
     },
 

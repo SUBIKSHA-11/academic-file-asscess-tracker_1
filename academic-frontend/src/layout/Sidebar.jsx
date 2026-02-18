@@ -5,7 +5,8 @@ import {
   ClipboardList,
   AlertTriangle,
   Users,
-  LogOut
+  LogOut,
+  Building
 } from "lucide-react";
 
 import { useContext } from "react";            // ✅ MUST IMPORT
@@ -39,6 +40,10 @@ function Sidebar() {
         <Link to="/users" className="flex items-center gap-3 hover:opacity-80">
           <Users size={18} /> Users
         </Link>
+<Link to="/departments" className="flex items-center gap-3 hover:opacity-80">
+  <Building size={18} />
+  Departments
+</Link>
 
         <div
           onClick={logout}

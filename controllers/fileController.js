@@ -46,6 +46,10 @@ const uploadFile = async (req, res) => {
       action: "UPLOAD",
       ipAddress: req.ip
     });
+    console.log("REQ.USER:", req.user);
+console.log("REQ.FILE:", req.file);
+console.log("REQ.BODY:", req.body);
+
 
     res.status(201).json({
       message: "File uploaded and saved successfully",

@@ -21,5 +21,12 @@ router.get("/logs", adminController.getLogs);
 router.get("/users", adminController.getAllUsers);
 router.patch("/users/:id/role", adminController.updateUserRole);
 router.delete("/users/:id", adminController.deleteUser);
+router.get("/downloads-today", adminController.getDownloadsToday);
+router.delete("/alerts/:id", adminController.deleteAlert);
+router.patch("/alerts/:id/review", adminController.markAlertReviewed);
+router.get("/most-active-department", adminController.getMostActiveDepartment);
+router.get("/departments", adminController.getDepartments);
+router.post("/departments", adminController.addDepartment);
+
 
 module.exports = router;

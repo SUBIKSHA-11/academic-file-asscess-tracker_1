@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import axios from "../api/axios";
 
 function Upload() {
@@ -14,6 +14,17 @@ function Upload() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const [departments, setDepartments] = useState([]);
+
+useEffect(() => {
+  fetchDepartments();
+}, []);
+
+const fetchDepartments = async () => {
+  const res = await axios.get("/admin/departments");
+  setDepartments(res.data);
+};
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -79,19 +90,22 @@ function Upload() {
           className="w-full border p-2 rounded"
         />
 
-        <select
-          name="department"
-          value={form.department}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        >
-          <option value="">Select Department</option>
-          <option value="CSE">CSE</option>
-          <option value="IT">IT</option>
-          <option value="ECE">ECE</option>
-          <option value="EEE">EEE</option>
-        </select>
+     <select
+  name="department"
+  required
+  value={form.department}
+  onChange={handleChange}
+  className="border p-2 rounded"
+>
+  <option value="">Select Department</option>
+
+  {departments.map(d => (
+    <option key={d._id} value={d.name}>
+      {d.name}
+    </option>
+  ))}
+</select>
+
 
         <select
           name="year"

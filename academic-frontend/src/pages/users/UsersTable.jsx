@@ -5,6 +5,7 @@ import { Trash2, Plus } from "lucide-react";
 function UsersTable({ role }) {
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
+const [departments, setDepartments] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -18,12 +19,22 @@ function UsersTable({ role }) {
 
   useEffect(() => {
     fetchUsers();
+    fetchDepartments();
   }, []);
 
   const fetchUsers = async () => {
     const res = await axios.get("/admin/users");
     setUsers(res.data.filter((u) => u.role === role));
   };
+  const fetchDepartments = async () => {
+  try {
+    const res = await axios.get("/admin/departments");
+    setDepartments(res.data.filter(d => d.isActive));
+  } catch (err) {
+    console.error("Department fetch failed", err);
+  }
+};
+
 
   const deleteUser = async (id) => {
     await axios.delete(`/admin/users/${id}`);
@@ -91,13 +102,22 @@ function UsersTable({ role }) {
             required
             className="border p-2 rounded"
           />
+  <select
+    name="department"
+    value={form.department}
+    onChange={handleChange}
+    required
+    className="border p-2 rounded"
+  >
+    <option value="">Select Department</option>
 
-          <input
-            name="department"
-            placeholder="Department"
-            onChange={handleChange}
-            className="border p-2 rounded"
-          />
+    {departments.map((dept) => (
+      <option key={dept._id} value={dept.name}>
+        {dept.name}
+      </option>
+    ))}
+  </select>
+          
 
           {role === "FACULTY" && (
             <input

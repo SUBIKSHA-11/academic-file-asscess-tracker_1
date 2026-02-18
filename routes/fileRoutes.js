@@ -12,7 +12,7 @@ router.post(
   authMiddleware,
   roleMiddleware(["ADMIN", "FACULTY"]),
   upload.single("file"),
-  fileController.uploadFile
+  fileController.uploadFile,
 );
 // Get files route
 router.get(

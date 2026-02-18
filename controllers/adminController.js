@@ -9,12 +9,13 @@ const getDashboardStats = async (req, res) => {
     const totalFaculty = await User.countDocuments({ role: "FACULTY" });
     const totalStudents = await User.countDocuments({ role: "STUDENT" });
     const totalFiles = await AcademicFile.countDocuments();
+ 
 
     res.json({
       totalUsers,
       totalFaculty,
       totalStudents,
-      totalFiles
+      totalFiles,
     });
 
   } catch (error) {
@@ -81,30 +82,30 @@ const getDepartmentDistribution = async (req, res) => {
 // Get Alerts
 const getAlerts = async (req, res) => {
   try {
-    const alerts = await Alert.find()
-      .populate("user", "name role")
-      .sort({ createdAt: -1 });
+    const { severity, from, to } = req.query;
 
-    const high = alerts.filter(a => a.severity === "HIGH").length;
-    const medium = alerts.filter(a => a.severity === "MEDIUM").length;
-    const low = alerts.filter(a => a.severity === "LOW").length;
+    let filter = {};
 
-    const uniqueUsers = [...new Set(alerts.map(a => a.user?._id?.toString()))].length;
+    if (severity) filter.severity = severity;
 
-    res.json({
-      alerts,
-      summary: {
-        high,
-        medium,
-        low,
-        uniqueUsers
-      }
-    });
+    if (from && to) {
+      filter.createdAt = {
+        $gte: new Date(from),
+        $lte: new Date(to)
+      };
+    }
+
+    const alerts = await Alert.find(filter)
+      .populate("user", "name email role");
+
+    res.json(alerts);
 
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch alerts" });
+    res.status(500).json({ message: "Failed" });
   }
 };
+
+
 
 const TemporaryAccess = require("../models/TemporaryAccess");
 
@@ -257,6 +258,115 @@ const getMonthlyUploads = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch monthly data" });
   }
 };
+const getDownloadsToday = async (req, res) => {
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const count = await ActivityLog.countDocuments({
+      action: "DOWNLOAD",
+      createdAt: { $gte: startOfDay }
+    });
+
+    res.json({ downloadsToday: count });
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+
+const markAlertReviewed = async (req, res) => {
+  try {
+    await Alert.findByIdAndUpdate(req.params.id, {
+      reviewed: true
+    });
+
+    res.json({ message: "Marked as reviewed" });
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+
+const deleteAlert = async (req, res) => {
+  try {
+    await Alert.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+const getLogsGroupedByUser = async (req, res) => {
+  try {
+    const result = await ActivityLog.aggregate([
+      {
+        $group: {
+          _id: "$user",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
+    res.json(result);
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+
+const getMostActiveDepartment = async (req, res) => {
+  try {
+    const result = await ActivityLog.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "userDetails"
+        }
+      },
+      { $unwind: "$userDetails" },
+      {
+        $group: {
+          _id: "$userDetails.department",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 1 }
+    ]);
+
+    res.json(result[0] || null);
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+const Department = require("../models/Department");
+
+const getDepartments = async (req, res) => {
+  try {
+    const departments = await Department.find();
+    res.json(departments);
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+
+const addDepartment = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    const dept = await Department.create({ name });
+
+    res.json(dept);
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+
 
 
 module.exports = {
@@ -271,7 +381,15 @@ module.exports = {
   deleteUser,
   getRecentActivity,
   getMonthlyUploads,
-  getLogs
+  getLogs,
+  getDownloadsToday,
+  markAlertReviewed,
+deleteAlert,
+getLogsGroupedByUser,
+getMostActiveDepartment,
+getDepartments,
+addDepartment
+
 };
 
 
