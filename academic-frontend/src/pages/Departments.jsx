@@ -10,10 +10,15 @@ function Departments() {
     fetchDepartments();
   }, []);
 
-  const fetchDepartments = async () => {
-    const res = await axios.get("/admin/departments");
+const fetchDepartments = async () => {
+  try {
+    const res = await axios.get("/departments/stats");
     setDepartments(res.data);
-  };
+  } catch (err) {
+    console.error("Department fetch failed", err);
+  }
+};
+
 
   const addDepartment = async (e) => {
     e.preventDefault();
@@ -21,6 +26,14 @@ function Departments() {
     setName("");
     fetchDepartments();
   };
+const toggleDepartment = async (id) => {
+  try {
+    await axios.patch(`/admin/departments/${id}/toggle`);
+    fetchDepartments();
+  } catch (error) {
+    console.error("Toggle failed", error);
+  }
+};
 
 
   return (
@@ -74,8 +87,21 @@ function Departments() {
                 <td className="p-3">
                   {dept.isActive ? "Active" : "Disabled"}
                 </td>
-                <td className="p-3 text-center">
-                </td>
+                <td className="p-3">
+  <div className="flex justify-center">
+    <button
+      onClick={() => toggleDepartment(dept._id)}
+      className={`px-4 py-1 rounded-lg text-white text-sm transition ${
+        dept.isActive
+          ? "bg-red-500 hover:bg-red-600"
+          : "bg-green-500 hover:bg-green-600"
+      }`}
+    >
+      {dept.isActive ? "Disable" : "Activate"}
+    </button>
+  </div>
+</td>
+
               </tr>
             ))}
           </tbody>

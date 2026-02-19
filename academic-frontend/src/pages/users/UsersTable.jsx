@@ -28,7 +28,7 @@ const [departments, setDepartments] = useState([]);
   };
   const fetchDepartments = async () => {
   try {
-    const res = await axios.get("/admin/departments");
+    const res = await axios.get("/departments");
     setDepartments(res.data.filter(d => d.isActive));
   } catch (err) {
     console.error("Department fetch failed", err);
@@ -112,7 +112,7 @@ const [departments, setDepartments] = useState([]);
     <option value="">Select Department</option>
 
     {departments.map((dept) => (
-      <option key={dept._id} value={dept.name}>
+      <option key={dept._id} value={dept._id}>
         {dept.name}
       </option>
     ))}
@@ -205,7 +205,7 @@ const [departments, setDepartments] = useState([]);
                   </>
                 )}
 
-                <td className="p-3">{user.department || "-"}</td>
+                <td className="p-3">{user.department?.name || "-"}</td>
                 <td className="p-3">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>

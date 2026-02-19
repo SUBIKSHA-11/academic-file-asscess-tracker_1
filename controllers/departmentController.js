@@ -32,46 +32,67 @@ const getDepartments = async (req, res) => {
 
 
 
-// Department Analytics
 const getDepartmentStats = async (req, res) => {
   try {
     const departments = await Department.find();
 
-    const stats = await Promise.all(
+    const result = await Promise.all(
       departments.map(async (dept) => {
+
         const facultyCount = await User.countDocuments({
-          department: dept.name,
+          department: dept._id,
           role: "FACULTY"
         });
 
         const studentCount = await User.countDocuments({
-          department: dept.name,
+          department: dept._id,
           role: "STUDENT"
         });
 
         const fileCount = await AcademicFile.countDocuments({
-          department: dept.name
+          department: dept._id,
         });
 
         return {
+          _id: dept._id,
           name: dept.name,
-          isActive: dept.isActive,
           facultyCount,
           studentCount,
-          fileCount
+          fileCount,
+          isActive: dept.isActive
         };
       })
     );
 
-    res.json(stats);
+    res.json(result);
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Failed" });
   }
+};const toggleDepartment = async (req, res) => {
+  try {
+    const dept = await Department.findById(req.params.id);
+
+    if (!dept) {
+      return res.status(404).json({ message: "Department not found" });
+    }
+
+    dept.isActive = !dept.isActive;
+    await dept.save();
+
+    res.json({ message: "Status updated", dept });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Toggle failed" });
+  }
 };
+
 
 module.exports = {
   createDepartment,
   getDepartments,
-  getDepartmentStats
+  getDepartmentStats,
+  toggleDepartment
 };

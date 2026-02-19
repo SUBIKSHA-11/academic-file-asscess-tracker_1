@@ -5,6 +5,7 @@ const adminController = require("../controllers/adminController");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 
+const departmentController = require("../controllers/departmentController");
 router.use(authMiddleware, roleMiddleware(["ADMIN"]));
 
 router.get("/stats", adminController.getDashboardStats);
@@ -27,6 +28,10 @@ router.patch("/alerts/:id/review", adminController.markAlertReviewed);
 router.get("/most-active-department", adminController.getMostActiveDepartment);
 router.get("/departments", adminController.getDepartments);
 router.post("/departments", adminController.addDepartment);
+router.patch(
+  "/departments/:id/toggle",
+  departmentController.toggleDepartment
+);
 
 
 module.exports = router;

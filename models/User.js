@@ -13,8 +13,12 @@ const userSchema = new mongoose.Schema(
       enum: ["ADMIN", "FACULTY", "STUDENT"],
       required: true,
     },
+department: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Department",
+  required: true
+},
 
-    department: String,
 
     facultyId: {
       type: String,

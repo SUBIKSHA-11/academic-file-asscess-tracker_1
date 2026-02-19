@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "../api/axios";
 import {
-  BarChart,
   PieChart,
   Users,
   FileText,
@@ -10,6 +9,7 @@ import {
 } from "lucide-react";
 import {
   Bar,
+  Pie,
   Doughnut
 } from "react-chartjs-2";
 import {
@@ -39,9 +39,19 @@ function Dashboard() {
   const [monthlyData, setMonthlyData] = useState([]);
 const [topFiles, setTopFiles] = useState([]);
   const [mostActiveDept, setMostActiveDept] = useState(null);
-
+const [adminName, setAdminName] = useState("");
+ const fetchAdminDetails = async () => {
+    try {
+      const res = await axios.get("/auth/me");
+      setAdminName(res.data.name);
+    } catch (error) {
+      console.error("Failed to fetch admin details");
+    }
+  };
   useEffect(() => {
     fetchDashboard();
+    
+  fetchAdminDetails();
   }, []);
 
   const fetchDashboard = async () => {
@@ -99,19 +109,57 @@ const [topFiles, setTopFiles] = useState([]);
       }
     ]
   };
-  const topFilesChart = {
-    labels: topFiles.map(f => f.fileName),
-    datasets: [{
+ const topFilesChart = {
+  labels: topFiles.map(f =>
+    f.fileName.length > 20
+      ? f.fileName.substring(0, 20) + "..."
+      : f.fileName
+  ),
+  datasets: [
+    {
       label: "Downloads",
       data: topFiles.map(f => f.downloadCount),
       backgroundColor: "#ef4444"
-    }]
-  };
+    }
+  ]
+};
+const chartOptions = {
+  responsive: true,
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      callbacks: {
+        title: function (context) {
+          const index = context[0].dataIndex;
+          return topFiles[index].fileName; // show full name on hover
+        }
+      }
+    }
+  },
+  scales: {
+    x: {
+      ticks: {
+        maxRotation: 0,
+        minRotation: 0,
+        autoSkip: false
+      }
+    }
+  }
+};
+
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-8">
-        Admin Dashboard
-      </h2>
+      <div className="mb-8">
+  <h2 className="text-2xl font-semibold">
+    Welcome back, {adminName || "Admin"} 👋
+  </h2>
+  <p className="text-gray-500 mt-1">
+    Here's what's happening in your system today.
+  </p>
+</div>
+
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
@@ -161,73 +209,135 @@ const [topFiles, setTopFiles] = useState([]);
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="mb-4 flex items-center gap-2 font-semibold">
-            <PieChart size={18} />
-            Category Distribution
-          </h3>
-          <Doughnut data={categoryChart} />
-        </div>
+       <div className="bg-white p-6 rounded-xl shadow-md">
+  <h3 className="mb-4 flex items-center gap-2 font-semibold">
+    <PieChart size={18} />
+    Category Distribution
+  </h3>
 
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="mb-4 flex items-center gap-2 font-semibold">
-            <BarChart size={18} />
-            Department Distribution
-          </h3>
-          <Bar data={departmentChart} />
-        </div>
+  <div className="flex justify-center">
+    <div className="w-64 h-64">
+      <Doughnut
+        data={categoryChart}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom"
+            }
+          }
+        }}
+      />
+    </div>
+  </div>
+</div>
+
+
+     <div className="bg-white p-6 rounded-xl shadow-md">
+  <h3 className="mb-4 flex items-center gap-2 font-semibold">
+    <PieChart size={18} />
+    Department Distribution
+  </h3>
+
+  <div className="flex justify-center">
+    <div className="w-64 h-64">
+      <Pie
+        data={{
+          labels: departmentData.map((d) => d._id?.name || d._id),
+          datasets: [
+            {
+              data: departmentData.map((d) => d.count),
+              backgroundColor: [
+                "#f97316",
+                "#ef4444",
+                "#fb923c",
+                "#dc2626",
+                "#facc15"
+              ]
+            }
+          ]
+        }}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom"
+            }
+          }
+        }}
+      />
+    </div>
+  </div>
+</div>
+
         
         {/* Most Downloaded Files Graph */}
         <div className="bg-white p-6 rounded-xl shadow-md">
           <h3 className="mb-4 font-semibold">
             Most Downloaded Files
           </h3>
-          <Bar data={topFilesChart} />
+        <div className="overflow-x-auto">
+    <div className="min-w-[700px] h-72">
+  <Bar data={topFilesChart} options={chartOptions} />
+</div>
+</div>
+
         </div>
 
         {/* Monthly Upload Trend */}
-        <div className="bg-white p-6 rounded-xl shadow-md mt-8">
-          <h3 className="mb-4 font-semibold">Monthly Upload Trend</h3>
-          <Bar
-            data={{
-              labels: monthlyData.map(m => `Month ${m._id}`),
-              datasets: [{
-                label: "Uploads",
-                data: monthlyData.map(m => m.count),
-                backgroundColor: "#3b82f6"
-              }]
-            }}
-          />
-        </div>
+       <div className="bg-white p-6 rounded-xl shadow-md">
+  <h3 className="mb-4 font-semibold">
+    Monthly Upload Trend
+  </h3>
+<div className="overflow-x-auto">
+    <div className="min-w-[700px] h-72">
+    <Bar
+      data={{
+        labels: monthlyData.map(m => `Month ${m._id}`),
+        datasets: [{
+          label: "Uploads",
+          data: monthlyData.map(m => m.count),
+          backgroundColor: "#3b82f6"
+        }]
+      }}
+    />
+  </div>
+</div>
+</div>
 
         {/* Recent Activity */}
-        <div className="bg-white p-6 rounded-xl shadow-md mt-8">
-          <h3 className="mb-4 font-semibold">Recent Activity</h3>
+        <div className="bg-white p-6 rounded-xl shadow-md">
+  <h3 className="mb-4 font-semibold">Recent Activity</h3>
 
-          <table className="w-full text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 text-left">User</th>
-                <th className="p-2 text-left">Action</th>
-                <th className="p-2 text-left">File</th>
-                <th className="p-2 text-left">Time</th>
-              </tr>
-            </thead>
+  <div className="max-h-80 overflow-y-auto">
+    <table className="w-full text-sm">
+      <thead className="bg-gray-100 sticky top-0">
+        <tr>
+          <th className="p-2 text-left">User</th>
+          <th className="p-2 text-left">Action</th>
+          <th className="p-2 text-left">File</th>
+          <th className="p-2 text-left">Time</th>
+        </tr>
+      </thead>
 
-            <tbody>
-              {recentActivity.map(log => (
-                <tr key={log._id} className="border-b">
-                  <td className="p-2">{log.user?.name}</td>
-                  <td className="p-2">{log.action}</td>
-                  <td className="p-2">{log.file?.fileName}</td>
-                  <td className="p-2">
-                    {new Date(log.createdAt).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <tbody>
+        {recentActivity.map(log => (
+          <tr key={log._id} className="border-b">
+            <td className="p-2">{log.user?.name}</td>
+            <td className="p-2">{log.action}</td>
+            <td className="p-2">{log.file?.fileName}</td>
+            <td className="p-2">
+              {new Date(log.createdAt).toLocaleString()}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
       </div>
     </div>
