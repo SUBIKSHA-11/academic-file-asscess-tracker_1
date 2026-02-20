@@ -17,6 +17,9 @@ import FacultyMyFiles from "./pages/faculty/MyFiles";
 import FacultyDepartmentFiles from "./pages/faculty/DepartmentFiles";
 import FacultyUpload from "./pages/faculty/Upload";
 import FacultyAnalytics from "./pages/faculty/Analytics";
+import StudentLayout from "./layouts/StudentLayout";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentBrowseFiles from "./pages/student/StudentBrowseFiles";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
@@ -57,6 +60,21 @@ function App() {
         </Route>
 
         <Route
+          path="/student/*"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["STUDENT"]}>
+                <StudentLayout />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="files" element={<StudentBrowseFiles />} />
+        </Route>
+
+        <Route
           path="/users"
           element={
             <ProtectedRoute>
@@ -93,7 +111,7 @@ function App() {
           path="/files"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRoles={["ADMIN", "STUDENT"]}>
+              <RoleRoute allowedRoles={["ADMIN"]}>
                 <Layout><Files /></Layout>
               </RoleRoute>
             </ProtectedRoute>

@@ -27,6 +27,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/files", require("./routes/fileRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/faculty", require("./routes/facultyRoutes"));
+app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api", require("./routes/departmentRoutes"));
 //app.use("/api/admin", require("./routes/departmentRoutes"));
 

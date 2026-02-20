@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 const getHomeByRole = (role) => {
   if (role === "ADMIN") return "/dashboard";
   if (role === "FACULTY") return "/faculty/dashboard";
-  return "/files";
+  return "/student/dashboard";
 };
 
 function RoleRoute({ children, allowedRoles }) {

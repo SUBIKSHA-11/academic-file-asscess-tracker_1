@@ -33,7 +33,7 @@ function Login() {
       } else if (loginRes.data.role === "FACULTY") {
         navigate("/faculty/dashboard");
       } else {
-        navigate("/files");
+        navigate("/student/dashboard");
       }
 
     } catch (error) {
