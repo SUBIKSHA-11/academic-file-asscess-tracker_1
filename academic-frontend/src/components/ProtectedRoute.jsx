@@ -3,11 +3,26 @@ import { Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 function ProtectedRoute({ children }) {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
+  const token = sessionStorage.getItem("token");
+  const storedUser = sessionStorage.getItem("user");
+  let parsedStoredUser = null;
 
-  const token = localStorage.getItem("token");
+  if (storedUser) {
+    try {
+      parsedStoredUser = JSON.parse(storedUser);
+    } catch (error) {
+      parsedStoredUser = null;
+    }
+  }
 
-  if (!token || !user) {
+  const effectiveUser = user || parsedStoredUser;
+
+  if (loading) {
+    return null;
+  }
+
+  if (!token || !effectiveUser) {
     return <Navigate to="/" replace />;
   }
 

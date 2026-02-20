@@ -22,8 +22,12 @@ useEffect(() => {
 }, []);
 
 const fetchDepartments = async () => {
-  const res = await axios.get("/admin/departments");
-  setDepartments(res.data);
+  try {
+    const res = await axios.get("/departments");
+    setDepartments(res.data);
+  } catch (error) {
+    setMessage("Failed to load departments");
+  }
 };
 
   const handleChange = (e) => {
@@ -60,7 +64,7 @@ const fetchDepartments = async () => {
       });
 
     } catch (error) {
-      setMessage("Upload failed");
+      setMessage(error?.response?.data?.message || "Upload failed");
     }
 
     setLoading(false);

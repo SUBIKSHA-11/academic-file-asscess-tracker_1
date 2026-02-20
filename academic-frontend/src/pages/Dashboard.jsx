@@ -198,7 +198,7 @@ const chartOptions = {
           label="Most Active Department"
           value={
             mostActiveDept
-              ? `${mostActiveDept._id} (${mostActiveDept.count})`
+              ? `${mostActiveDept.departmentName || "Unknown"} (${mostActiveDept.count})`
               : "N/A"
           }
         />

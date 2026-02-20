@@ -323,17 +323,29 @@ const getMostActiveDepartment = async (req, res) => {
     const result = await ActivityLog.aggregate([
       {
         $lookup: {
-          from: "users",
-          localField: "user",
+          from: "academicfiles",
+          localField: "file",
           foreignField: "_id",
-          as: "userDetails"
+          as: "fileDetails"
         }
       },
-      { $unwind: "$userDetails" },
+      { $unwind: "$fileDetails" },
+      {
+        $match: {
+          "fileDetails.department": { $exists: true, $nin: [null, ""] }
+        }
+      },
       {
         $group: {
-          _id: "$userDetails.department",
+          _id: "$fileDetails.department",
           count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          count: 1,
+          departmentName: "$_id"
         }
       },
       { $sort: { count: -1 } },

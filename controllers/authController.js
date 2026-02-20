@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Department = require("../models/Department");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -16,9 +17,55 @@ const register = async (req, res) => {
       year
     } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email and password are required" });
+    }
+
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const usersCount = await User.countDocuments();
+    let finalRole = role;
+    let finalDepartment = department;
+
+    // Bootstrap: if no user exists, allow creating the first admin account.
+    if (usersCount === 0) {
+      finalRole = "ADMIN";
+
+      if (!finalDepartment) {
+        let defaultDepartment = await Department.findOne({ name: "General" });
+        if (!defaultDepartment) {
+          defaultDepartment = await Department.create({ name: "General" });
+        }
+        finalDepartment = defaultDepartment._id;
+      }
+    } else {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(403).json({ message: "Only admin can create users" });
+      }
+
+      const token = authHeader.split(" ")[1];
+      let decoded;
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+
+      if (decoded.role !== "ADMIN") {
+        return res.status(403).json({ message: "Only admin can create users" });
+      }
+    }
+
+    if (!["ADMIN", "FACULTY", "STUDENT"].includes(finalRole)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    if (!finalDepartment) {
+      return res.status(400).json({ message: "Department is required" });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -27,14 +74,17 @@ const register = async (req, res) => {
       name,
       email,
       password: hashed,
-      role,
-      department,
+      role: finalRole,
+      department: finalDepartment,
       facultyId: facultyId || undefined,
       studentId: studentId || undefined,
       year: year || null
     });
 
-    res.status(201).json(user);
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password;
+
+    res.status(201).json(userWithoutPassword);
 
   } catch (error) {
     console.error("Register Error:", error);
@@ -47,38 +97,41 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
 
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid password" });
     }
 
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      {
+        id: user._id,
+        role: user.role,
+        name: user.name
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
     res.json({
       token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+      role: user.role,
+      name: user.name
     });
 
   } catch (error) {
     res.status(500).json({ message: "Login failed" });
   }
 };
-
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId)

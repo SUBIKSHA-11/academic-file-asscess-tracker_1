@@ -5,6 +5,13 @@ const TemporaryAccess = require("../models/TemporaryAccess");
 const path = require("path");
 const fs = require("fs");
 
+const resolveStoredFilePath = (storedPath) => {
+  if (!storedPath) return null;
+  return path.isAbsolute(storedPath)
+    ? storedPath
+    : path.join(__dirname, "..", storedPath);
+};
+
 // =============================
 // UPLOAD FILE
 // =============================
@@ -191,7 +198,10 @@ const downloadFile = async (req, res) => {
       });
     }
 
-    const fileFullPath = path.join(__dirname, "..", file.filePath);
+    const fileFullPath = resolveStoredFilePath(file.filePath);
+    if (!fileFullPath || !fs.existsSync(fileFullPath)) {
+      return res.status(404).json({ message: "Physical file not found" });
+    }
     res.download(fileFullPath, file.fileName);
 
   } catch (error) {
@@ -222,9 +232,9 @@ const deleteFile = async (req, res) => {
       return res.status(403).json({ message: "You can delete only your own files" });
     }
 
-    const fileFullPath = path.join(__dirname, "..", file.filePath);
+    const fileFullPath = resolveStoredFilePath(file.filePath);
 
-    if (fs.existsSync(fileFullPath)) {
+    if (fileFullPath && fs.existsSync(fileFullPath)) {
       fs.unlinkSync(fileFullPath);
     }
 
@@ -271,7 +281,7 @@ const viewFile = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const fileFullPath = path.join(__dirname, "..", file.filePath);
+    const fileFullPath = resolveStoredFilePath(file.filePath);
 
     if (!fs.existsSync(fileFullPath)) {
       return res.status(404).json({ message: "Physical file not found" });
@@ -283,7 +293,6 @@ const viewFile = async (req, res) => {
       action: "VIEW",
       ipAddress: req.ip
     });
-    res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="${file.fileName}"`);
     res.sendFile(fileFullPath);
 
