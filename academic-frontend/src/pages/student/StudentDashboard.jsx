@@ -3,11 +3,11 @@ import axios from "../../api/axios";
 import { Download, Eye, Fingerprint, Activity } from "lucide-react";
 
 const getIntensityClass = (count) => {
-  if (count === 0) return "bg-slate-200";
-  if (count <= 2) return "bg-indigo-200";
-  if (count <= 5) return "bg-indigo-400";
-  if (count <= 9) return "bg-indigo-600";
-  return "bg-indigo-800";
+  if (count === 0) return "bg-[#DFD9D8]";
+  if (count <= 2) return "bg-[#FC8F8F]";
+  if (count <= 5) return "bg-[#E06D72]";
+  if (count <= 9) return "bg-[#B44446]";
+  return "bg-[#64242F]";
 };
 
 function StudentDashboard() {
@@ -131,19 +131,19 @@ function StudentDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 shadow-md">
+      <section className="rounded-2xl bg-[#64242F] text-[#DFD9D8] p-6 shadow-md">
         <h2 className="text-2xl font-bold">Welcome back, {name}</h2>
-        <p className="text-indigo-100 mt-1">Your personal usage stats and access records.</p>
+        <p className="text-[#FC8F8F] mt-1">Your personal usage stats and access records.</p>
       </section>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {cards.map((card) => (
           <div
             key={card.label}
-            className="rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-5 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            className="rounded-xl bg-[#B44446] text-[#DFD9D8] p-5 shadow-md transition-all duration-300 hover:-translate-y-1 hover:bg-[#64242F] hover:shadow-xl"
           >
             {card.icon}
-            <p className="text-sm mt-3 text-indigo-100">{card.label}</p>
+            <p className="text-sm mt-3 text-[#FC8F8F]">{card.label}</p>
             <p className="text-3xl font-bold mt-1">{card.value}</p>
           </div>
         ))}
@@ -207,11 +207,11 @@ function StudentDashboard() {
 
         <div className="mt-4 flex items-center gap-2 text-xs text-slate-600">
           <span>Less</span>
-          <span className="w-3 h-3 rounded-sm bg-slate-200" />
-          <span className="w-3 h-3 rounded-sm bg-indigo-200" />
-          <span className="w-3 h-3 rounded-sm bg-indigo-400" />
-          <span className="w-3 h-3 rounded-sm bg-indigo-600" />
-          <span className="w-3 h-3 rounded-sm bg-indigo-800" />
+          <span className="w-3 h-3 rounded-sm bg-[#DFD9D8]" />
+          <span className="w-3 h-3 rounded-sm bg-[#FC8F8F]" />
+          <span className="w-3 h-3 rounded-sm bg-[#E06D72]" />
+          <span className="w-3 h-3 rounded-sm bg-[#B44446]" />
+          <span className="w-3 h-3 rounded-sm bg-[#64242F]" />
           <span>More</span>
         </div>
       </section>

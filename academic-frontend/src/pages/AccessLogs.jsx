@@ -93,9 +93,9 @@ function AccessLogs() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
+          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">User</th>
               <th className="p-3 text-left">Role</th>

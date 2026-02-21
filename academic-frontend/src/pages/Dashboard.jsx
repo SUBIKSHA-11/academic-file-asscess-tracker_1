@@ -89,11 +89,11 @@ const [adminName, setAdminName] = useState("");
       {
         data: categoryData.map((c) => c.count),
         backgroundColor: [
-          "#f97316",
-          "#ef4444",
-          "#fb923c",
-          "#dc2626",
-          "#facc15"
+          "#0C3C01",
+          "#5B6D49",
+          "#A2AC82",
+          "#2E2D1D",
+          "#7D8765"
         ]
       }
     ]
@@ -105,21 +105,21 @@ const [adminName, setAdminName] = useState("");
       {
         label: "Files",
         data: departmentData.map((d) => d.count),
-        backgroundColor: "#f97316"
+        backgroundColor: "#5B6D49"
       }
     ]
   };
  const topFilesChart = {
   labels: topFiles.map(f =>
-    f.fileName.length > 20
-      ? f.fileName.substring(0, 20) + "..."
+    f.fileName.length > 10
+      ? f.fileName.substring(0, 5) + "..."
       : f.fileName
   ),
   datasets: [
     {
       label: "Downloads",
       data: topFiles.map(f => f.downloadCount),
-      backgroundColor: "#ef4444"
+      backgroundColor: "#5B6D49"
     }
   ]
 };
@@ -155,7 +155,7 @@ const chartOptions = {
   <h2 className="text-2xl font-semibold">
     Welcome back, {adminName || "Admin"} 👋
   </h2>
-  <p className="text-gray-500 mt-1">
+  <p className="text-[#5B6D49] mt-1">
     Here's what's happening in your system today.
   </p>
 </div>
@@ -209,7 +209,7 @@ const chartOptions = {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-       <div className="bg-white p-6 rounded-xl shadow-md">
+       <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
   <h3 className="mb-4 flex items-center gap-2 font-semibold">
     <PieChart size={18} />
     Category Distribution
@@ -234,7 +234,7 @@ const chartOptions = {
 </div>
 
 
-     <div className="bg-white p-6 rounded-xl shadow-md">
+     <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
   <h3 className="mb-4 flex items-center gap-2 font-semibold">
     <PieChart size={18} />
     Department Distribution
@@ -249,11 +249,11 @@ const chartOptions = {
             {
               data: departmentData.map((d) => d.count),
               backgroundColor: [
-                "#f97316",
-                "#ef4444",
-                "#fb923c",
-                "#dc2626",
-                "#facc15"
+                "#0C3C01",
+                "#5B6D49",
+                "#A2AC82",
+                "#2E2D1D",
+                "#7D8765"
               ]
             }
           ]
@@ -274,7 +274,7 @@ const chartOptions = {
 
         
         {/* Most Downloaded Files Graph */}
-        <div className="bg-white p-6 rounded-xl shadow-md">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
           <h3 className="mb-4 font-semibold">
             Most Downloaded Files
           </h3>
@@ -287,7 +287,7 @@ const chartOptions = {
         </div>
 
         {/* Monthly Upload Trend */}
-       <div className="bg-white p-6 rounded-xl shadow-md">
+       <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
   <h3 className="mb-4 font-semibold">
     Monthly Upload Trend
   </h3>
@@ -299,7 +299,7 @@ const chartOptions = {
         datasets: [{
           label: "Uploads",
           data: monthlyData.map(m => m.count),
-          backgroundColor: "#3b82f6"
+          backgroundColor: "#5B6D49"
         }]
       }}
     />
@@ -308,12 +308,12 @@ const chartOptions = {
 </div>
 
         {/* Recent Activity */}
-        <div className="bg-white p-6 rounded-xl shadow-md">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
   <h3 className="mb-4 font-semibold">Recent Activity</h3>
 
   <div className="max-h-80 overflow-y-auto">
     <table className="w-full text-sm">
-      <thead className="bg-gray-100 sticky top-0">
+      <thead className="bg-[#2E2D1D] text-[#F1F2ED] sticky top-0">
         <tr>
           <th className="p-2 text-left">User</th>
           <th className="p-2 text-left">Action</th>
@@ -346,7 +346,7 @@ const chartOptions = {
 
 function StatCard({ icon, label, value }) {
   return (
-    <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 rounded-xl shadow-md">
+    <div className="bg-[#5B6D49] text-[#F1F2ED] p-6 rounded-xl shadow-md border border-[#A2AC82]">
       <div className="flex justify-between items-center mb-3">
         {icon}
       </div>

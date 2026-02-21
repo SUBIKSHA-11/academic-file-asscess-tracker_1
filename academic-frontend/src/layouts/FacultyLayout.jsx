@@ -27,7 +27,7 @@ function FacultyLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 md:flex">
-      <aside className="md:w-64 w-full bg-gradient-to-b from-sky-600 to-emerald-600 text-white p-5 md:p-6 shadow-lg">
+      <aside className="md:w-64 w-full bg-[#0B2E33] text-white p-5 md:p-6 shadow-lg">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Faculty Panel</h1>
           <p className="text-white/80 text-sm mt-1">Academic Workspace</p>
@@ -43,7 +43,7 @@ function FacultyLayout() {
                 className={({ isActive }) =>
                   `${linkBase} ${
                     isActive
-                      ? "bg-white text-sky-700 font-semibold shadow-sm"
+                      ? "bg-[#B8E3E9] text-[#0B2E33] font-semibold shadow-sm"
                       : "text-white/95 hover:bg-white/20"
                   }`
                 }

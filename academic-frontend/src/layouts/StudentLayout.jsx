@@ -12,7 +12,7 @@ function StudentLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 md:flex">
-      <aside className="md:w-64 w-full bg-gradient-to-b from-indigo-600 to-purple-600 text-white p-5 md:p-6 shadow-lg">
+      <aside className="md:w-64 w-full bg-[#64242F] text-white p-5 md:p-6 shadow-lg">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Student Panel</h1>
           <p className="text-white/80 text-sm mt-1">Browse Academic Resources</p>
@@ -24,7 +24,7 @@ function StudentLayout() {
             className={({ isActive }) =>
               `${linkBase} ${
                 isActive
-                  ? "bg-white text-indigo-700 font-semibold shadow-sm"
+                  ? "bg-[#DFD9D8] text-[#64242F] font-semibold shadow-sm"
                   : "text-white/95 hover:bg-white/20"
               }`
             }
@@ -38,7 +38,7 @@ function StudentLayout() {
             className={({ isActive }) =>
               `${linkBase} ${
                 isActive
-                  ? "bg-white text-indigo-700 font-semibold shadow-sm"
+                  ? "bg-[#DFD9D8] text-[#64242F] font-semibold shadow-sm"
                   : "text-white/95 hover:bg-white/20"
               }`
             }

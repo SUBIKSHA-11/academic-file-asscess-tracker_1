@@ -84,9 +84,9 @@ function FacultyUpload() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-sky-600 text-white shadow-md p-6 mb-6">
+      <div className="rounded-2xl bg-[#0B2E33] text-[#B8E3E9] shadow-md p-6 mb-6">
         <h2 className="text-2xl font-bold">Upload File</h2>
-        <p className="text-white/90 mt-1">Department is auto-filled from your profile.</p>
+        <p className="text-[#93B1B5] mt-1">Department is auto-filled from your profile.</p>
       </div>
 
       <form
@@ -209,7 +209,7 @@ function FacultyUpload() {
         <button
           type="submit"
           disabled={loading}
-          className="md:col-span-2 bg-gradient-to-r from-emerald-500 to-sky-600 text-white rounded-lg py-2 font-semibold hover:opacity-90 transition"
+          className="md:col-span-2 bg-[#0B2E33] text-[#B8E3E9] rounded-lg py-2 font-semibold hover:bg-[#4F7C82] transition"
         >
           {loading ? "Uploading..." : "Upload"}
         </button>
@@ -223,4 +223,3 @@ function FacultyUpload() {
 }
 
 export default FacultyUpload;
-

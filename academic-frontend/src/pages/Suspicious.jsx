@@ -47,11 +47,11 @@ function Suspicious() {
   const getSeverityStyle = (severity) => {
     switch (severity) {
       case "HIGH":
-        return "bg-red-100 text-red-700";
+        return "bg-[#FC8F8F] text-[#64242F]";
       case "MEDIUM":
-        return "bg-orange-100 text-orange-700";
+        return "bg-[#DFD9D8] text-[#5B6D49]";
       case "LOW":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-[#B8E3E9] text-[#0B2E33]";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -108,9 +108,9 @@ function Suspicious() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
+          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">User</th>
               <th className="p-3 text-left">Reason</th>
@@ -150,7 +150,7 @@ function Suspicious() {
                       Reviewed
                     </span>
                   ) : (
-                    <span className="text-red-600 font-semibold">
+                    <span className="text-[#B44446] font-semibold">
                       Pending
                     </span>
                   )}

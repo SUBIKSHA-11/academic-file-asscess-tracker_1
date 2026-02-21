@@ -293,6 +293,7 @@ const viewFile = async (req, res) => {
       action: "VIEW",
       ipAddress: req.ip
     });
+    res.type(file.fileName);
     res.setHeader("Content-Disposition", `inline; filename="${file.fileName}"`);
     res.sendFile(fileFullPath);
 

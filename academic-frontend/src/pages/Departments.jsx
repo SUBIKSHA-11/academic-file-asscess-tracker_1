@@ -57,16 +57,16 @@ const toggleDepartment = async (id) => {
 
         <button
           type="submit"
-          className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-2 rounded"
+          className="bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded hover:bg-[#5B6D49] transition-colors"
         >
           <Plus size={16} />
         </button>
       </form>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
+          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">Department</th>
               <th className="p-3 text-left">Faculty</th>
@@ -93,8 +93,8 @@ const toggleDepartment = async (id) => {
       onClick={() => toggleDepartment(dept._id)}
       className={`px-4 py-1 rounded-lg text-white text-sm transition ${
         dept.isActive
-          ? "bg-red-500 hover:bg-red-600"
-          : "bg-green-500 hover:bg-green-600"
+          ? "bg-[#B44446] hover:bg-[#64242F]"
+          : "bg-[#5B6D49] hover:bg-[#0C3C01]"
       }`}
     >
       {dept.isActive ? "Disable" : "Activate"}

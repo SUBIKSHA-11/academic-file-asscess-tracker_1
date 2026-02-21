@@ -57,13 +57,14 @@ const handleDownload = async (id, fileName) => {
       responseType: "blob",
     });
 
-    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const url = window.URL.createObjectURL(res.data);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", fileName);
     document.body.appendChild(link);
     link.click();
     link.remove();
+    window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error("Download failed", error);
   }
@@ -75,10 +76,9 @@ const handleView = async (id) => {
       responseType: "blob",
     });
 
-    const file = new Blob([res.data], { type: "application/pdf" });
-    const fileURL = window.URL.createObjectURL(file);
+    const fileURL = window.URL.createObjectURL(res.data);
 
-    window.open(fileURL, "_blank");
+    window.open(fileURL, "_blank", "noopener,noreferrer");
 
   } catch (error) {
     console.error("View failed", error);
@@ -97,7 +97,7 @@ const handleView = async (id) => {
         <div className="mb-6">
           <button
             onClick={() => navigate("/upload")}
-            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:opacity-90"
+            className="flex items-center gap-2 bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded-lg shadow-md hover:bg-[#5B6D49] transition-colors"
           >
             <Upload size={18} />
             Upload File
@@ -137,9 +137,9 @@ const handleView = async (id) => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
+          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">File</th>
               <th className="p-3 text-left">Category</th>
@@ -170,7 +170,7 @@ const handleView = async (id) => {
                   {/* VIEW - ALL ROLES */}
           <button
   onClick={() => handleView(file._id)}
-  className="text-blue-500 hover:text-blue-700"
+  className="text-[#5B6D49] hover:text-[#0C3C01]"
 >
   <Eye size={18} />
 </button>
@@ -179,7 +179,7 @@ const handleView = async (id) => {
                   {/* DOWNLOAD - ALL ROLES */}
                   <button
   onClick={() => handleDownload(file._id, file.fileName)}
-  className="text-orange-500 hover:text-orange-700"
+  className="text-[#5B6D49] hover:text-[#0C3C01]"
 >
   <Download size={18} />
 </button>
@@ -191,7 +191,7 @@ const handleView = async (id) => {
                       file.uploadedBy?._id === user._id)) && (
                     <button
                       onClick={() => handleDelete(file._id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-[#B44446] hover:text-[#64242F]"
                     >
                       <Trash2 size={18} />
                     </button>

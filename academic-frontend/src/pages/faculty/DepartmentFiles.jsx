@@ -36,8 +36,8 @@ function DepartmentFiles() {
         ...authConfig,
         responseType: "blob"
       });
-      const fileURL = window.URL.createObjectURL(new Blob([res.data]));
-      window.open(fileURL, "_blank");
+      const fileURL = window.URL.createObjectURL(res.data);
+      window.open(fileURL, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("View failed", error);
     }
@@ -49,13 +49,14 @@ function DepartmentFiles() {
         ...authConfig,
         responseType: "blob"
       });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const url = window.URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed", error);
     }
@@ -72,9 +73,9 @@ function DepartmentFiles() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-sky-600 text-white shadow-md p-6">
+      <div className="rounded-2xl bg-[#0B2E33] text-[#B8E3E9] shadow-md p-6">
         <h2 className="text-2xl font-bold">Department Files</h2>
-        <p className="text-white/90 mt-1">View files from all departments based on access policy.</p>
+        <p className="text-[#93B1B5] mt-1">View files from all departments based on access policy.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
@@ -151,7 +152,7 @@ function DepartmentFiles() {
                     <button
                       type="button"
                       onClick={() => handleView(file._id)}
-                      className="text-sky-600 hover:text-sky-700"
+                      className="text-[#4F7C82] hover:text-[#0B2E33]"
                     >
                       <Eye size={18} />
                     </button>
@@ -160,7 +161,7 @@ function DepartmentFiles() {
                     <button
                       type="button"
                       onClick={() => handleDownload(file._id, file.fileName)}
-                      className="text-emerald-600 hover:text-emerald-700"
+                      className="text-[#4F7C82] hover:text-[#0B2E33]"
                     >
                       <Download size={18} />
                     </button>
@@ -182,4 +183,3 @@ function DepartmentFiles() {
 }
 
 export default DepartmentFiles;
-

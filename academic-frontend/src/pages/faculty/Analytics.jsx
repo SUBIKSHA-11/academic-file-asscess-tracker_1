@@ -61,7 +61,7 @@ function Analytics() {
       {
         label: "Uploads",
         data: monthlyData.map((m) => m.count),
-        backgroundColor: "#0ea5e9",
+        backgroundColor: "#4F7C82",
         borderRadius: 8
       }
     ]
@@ -72,16 +72,16 @@ function Analytics() {
     datasets: [
       {
         data: categoryData.map((c) => c.count),
-        backgroundColor: ["#0ea5e9", "#10b981", "#22d3ee", "#34d399", "#2563eb", "#14b8a6"]
+        backgroundColor: ["#B8E3E9", "#93B1B5", "#4F7C82", "#0B2E33", "#6D9297", "#2E4F55"]
       }
     ]
   };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-sky-600 text-white shadow-md p-6">
+      <div className="rounded-2xl bg-[#0B2E33] text-[#B8E3E9] shadow-md p-6">
         <h2 className="text-2xl font-bold">Faculty Analytics</h2>
-        <p className="text-white/90 mt-1">Performance insights from your uploaded files.</p>
+        <p className="text-[#93B1B5] mt-1">Performance insights from your uploaded files.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -152,4 +152,3 @@ function Analytics() {
 }
 
 export default Analytics;
-

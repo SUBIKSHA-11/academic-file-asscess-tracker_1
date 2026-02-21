@@ -71,7 +71,7 @@ const fetchDepartments = async () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md">
+    <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md border border-[#DFD9D8]">
       <h2 className="text-2xl font-semibold mb-6">
         Upload Academic File
       </h2>
@@ -172,7 +172,7 @@ const fetchDepartments = async () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-2 rounded-lg hover:opacity-90"
+          className="w-full bg-[#0C3C01] text-[#F1F2ED] py-2 rounded-lg hover:bg-[#5B6D49] transition-colors"
         >
           {loading ? "Uploading..." : "Upload File"}
         </button>

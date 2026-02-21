@@ -87,7 +87,7 @@ function FacultyDashboard() {
     datasets: [
       {
         data: categoryData.map((c) => c.count),
-        backgroundColor: ["#0ea5e9", "#10b981", "#22d3ee", "#34d399", "#2563eb", "#14b8a6"],
+        backgroundColor: ["#B8E3E9", "#93B1B5", "#4F7C82", "#0B2E33", "#6D9297", "#2E4F55"],
         borderColor: "#ffffff",
         borderWidth: 2
       }
@@ -100,7 +100,7 @@ function FacultyDashboard() {
       {
         label: "Uploads",
         data: monthlyData.map((m) => m.count),
-        backgroundColor: "#0ea5e9",
+        backgroundColor: "#4F7C82",
         borderRadius: 8
       }
     ]
@@ -127,19 +127,19 @@ function FacultyDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-gradient-to-r from-emerald-500 to-sky-600 text-white shadow-md p-6">
+      <section className="rounded-2xl bg-[#0B2E33] text-[#B8E3E9] shadow-md p-6">
         <h2 className="text-2xl font-bold">Welcome back, {facultyName} 👋</h2>
-        <p className="mt-1 text-white/90">Here is your teaching content overview.</p>
+        <p className="mt-1 text-[#93B1B5]">Here is your teaching content overview.</p>
       </section>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="rounded-xl bg-gradient-to-br from-emerald-500 to-sky-600 text-white p-5 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            className="rounded-xl bg-[#4F7C82] text-white p-5 shadow-md transition-all duration-300 hover:-translate-y-1 hover:bg-[#0B2E33] hover:shadow-xl"
           >
             <div>{card.icon}</div>
-            <p className="text-sm mt-3 text-white/90">{card.label}</p>
+            <p className="text-sm mt-3 text-[#B8E3E9]">{card.label}</p>
             <p className="text-3xl font-bold mt-1">{card.value}</p>
           </div>
         ))}
@@ -226,4 +226,3 @@ function FacultyDashboard() {
 }
 
 export default FacultyDashboard;
-

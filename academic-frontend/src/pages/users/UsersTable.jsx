@@ -66,7 +66,7 @@ const [departments, setDepartments] = useState([]);
 
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-2 rounded-lg"
+          className="flex items-center gap-2 bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded-lg hover:bg-[#5B6D49] transition-colors"
         >
           <Plus size={18} />
           Add {role}
@@ -156,7 +156,7 @@ const [departments, setDepartments] = useState([]);
 
           <button
             type="submit"
-            className="col-span-full bg-blue-500 text-white py-2 rounded-lg"
+            className="col-span-full bg-[#5B6D49] text-[#F1F2ED] py-2 rounded-lg hover:bg-[#0C3C01] transition-colors"
           >
             Create {role}
           </button>
@@ -164,9 +164,9 @@ const [departments, setDepartments] = useState([]);
       )}
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
+          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Email</th>
@@ -213,7 +213,7 @@ const [departments, setDepartments] = useState([]);
                 <td className="p-3 text-center">
                   <button
                     onClick={() => deleteUser(user._id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-[#B44446] hover:text-[#64242F]"
                   >
                     <Trash2 size={18} />
                   </button>

@@ -60,7 +60,7 @@ function RoleCard({ icon, title, count, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer bg-gradient-to-r from-orange-500 to-red-600 text-white p-10 rounded-2xl shadow-lg hover:scale-105 transition duration-300"
+      className="cursor-pointer bg-[#5B6D49] text-[#F1F2ED] p-10 rounded-2xl shadow-lg border border-[#A2AC82] hover:bg-[#0C3C01] hover:scale-105 transition duration-300"
     >
       <div className="flex justify-between items-center">
         {icon}

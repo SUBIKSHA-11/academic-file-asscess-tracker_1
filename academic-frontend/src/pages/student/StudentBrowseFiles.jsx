@@ -145,8 +145,8 @@ function StudentBrowseFiles() {
         headers: { Authorization: token ? `Bearer ${token}` : "" },
         responseType: "blob"
       });
-      const fileUrl = URL.createObjectURL(new Blob([res.data]));
-      window.open(fileUrl, "_blank");
+      const fileUrl = URL.createObjectURL(res.data);
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
     } catch (err) {
       console.error("View failed", err);
     }
@@ -159,7 +159,7 @@ function StudentBrowseFiles() {
         headers: { Authorization: token ? `Bearer ${token}` : "" },
         responseType: "blob"
       });
-      const blobUrl = URL.createObjectURL(new Blob([res.data]));
+      const blobUrl = URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href = blobUrl;
       link.setAttribute("download", fileName);
@@ -186,9 +186,9 @@ function StudentBrowseFiles() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 shadow-md">
+      <div className="rounded-2xl bg-[#64242F] text-[#DFD9D8] p-6 shadow-md">
         <h1 className="text-2xl font-bold">Browse Files</h1>
-        <p className="text-indigo-100 mt-1">Department - Semester - Category - Files</p>
+        <p className="text-[#FC8F8F] mt-1">Department - Semester - Category - Files</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border p-4 space-y-3">
@@ -245,7 +245,7 @@ function StudentBrowseFiles() {
                   className="text-left bg-white rounded-xl border shadow-sm p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <p className="text-lg font-semibold text-slate-800">{dept.name}</p>
-                  <p className="text-xs mt-2 inline-block bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+                  <p className="text-xs mt-2 inline-block bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
                     {dept.count} files
                   </p>
                 </button>
@@ -266,7 +266,7 @@ function StudentBrowseFiles() {
                   className="text-left bg-white rounded-xl border shadow-sm p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <p className="text-lg font-semibold text-slate-800">{sem.name}</p>
-                  <p className="text-xs mt-2 inline-block bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+                  <p className="text-xs mt-2 inline-block bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
                     {sem.count} files
                   </p>
                 </button>
@@ -332,7 +332,7 @@ function StudentBrowseFiles() {
                                   <span className={`text-xs px-2 py-1 rounded-full ${chipClass}`}>
                                     {cat.label}
                                   </span>
-                                  <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+                                  <span className="text-xs bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
                                     {file.downloadCount || 0} downloads
                                   </span>
                                   <button
