@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 const AcademicFile = require("../models/AcademicFile");
+const latestFilter = {
+  $or: [{ latestVersion: true }, { latestVersion: { $exists: false } }]
+};
 
 const getFacultyStats = async (req, res) => {
   try {
@@ -42,7 +45,10 @@ const getFacultyStats = async (req, res) => {
 
 const getMyFiles = async (req, res) => {
   try {
-    const files = await AcademicFile.find({ uploadedBy: req.user.id })
+    const files = await AcademicFile.find({
+      uploadedBy: req.user.id,
+      ...latestFilter
+    })
       .populate("uploadedBy", "name")
       .sort({ createdAt: -1 });
 
@@ -101,7 +107,10 @@ const getMonthlyUploads = async (req, res) => {
 
 const getRecentUploads = async (req, res) => {
   try {
-    const files = await AcademicFile.find({ uploadedBy: req.user.id })
+    const files = await AcademicFile.find({
+      uploadedBy: req.user.id,
+      ...latestFilter
+    })
       .populate("uploadedBy", "name")
       .sort({ createdAt: -1 })
       .limit(5);
@@ -117,11 +126,15 @@ const getAllFiles = async (req, res) => {
   try {
     const { department } = req.query;
     const filter = {
-      sensitivity: { $in: ["PUBLIC", "INTERNAL"] }
+      $and: [
+        latestFilter,
+        { $or: [{ status: "APPROVED" }, { status: { $exists: false } }] },
+        { sensitivity: { $in: ["PUBLIC", "INTERNAL"] } }
+      ]
     };
 
     if (department) {
-      filter.department = department;
+      filter.$and.push({ department });
     }
 
     const files = await AcademicFile.find(filter)

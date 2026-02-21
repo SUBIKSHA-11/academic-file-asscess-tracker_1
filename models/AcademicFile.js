@@ -59,6 +59,40 @@ const fileSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    status: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: "PENDING"
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    approvedAt: {
+      type: Date
+    },
+    publishedAt: {
+      type: Date
+    },
+    rejectionReason: {
+      type: String
+    },
+    versionGroupId: {
+      type: String,
+      index: true
+    },
+    versionNumber: {
+      type: Number,
+      default: 1
+    },
+    latestVersion: {
+      type: Boolean,
+      default: true
+    },
+    previousVersion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AcademicFile"
+    },
 
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,

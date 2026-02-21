@@ -8,7 +8,8 @@ import {
   BookOpen,
   ClipboardCheck,
   Folder,
-  FlaskConical
+  FlaskConical,
+  Star
 } from "lucide-react";
 import axios from "../../api/axios";
 
@@ -47,11 +48,18 @@ const normalizeCategory = (rawCategory) => {
   if (normalized === "LAB" || normalized.includes("LAB")) return "LAB";
   return "OTHER";
 };
+const formatDateTime = (raw) => {
+  if (!raw) return "Unknown time";
+  return new Date(raw).toLocaleString();
+};
 
 function StudentBrowseFiles() {
   const [files, setFiles] = useState([]);
+  const [recentFiles, setRecentFiles] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
   const [search, setSearch] = useState("");
 
   const [selectedDepartment, setSelectedDepartment] = useState("");
@@ -64,12 +72,26 @@ function StudentBrowseFiles() {
         setLoading(true);
         setError("");
         const token = sessionStorage.getItem("token");
-        const res = await axios.get("/student/files", {
+        const [filesRes, recentRes, bookmarkRes] = await Promise.all([
+          axios.get("/student/files", {
           headers: {
             Authorization: token ? `Bearer ${token}` : ""
           }
-        });
-        setFiles(res.data || []);
+          }),
+          axios.get("/student/recent-files", {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : ""
+            }
+          }),
+          axios.get("/student/bookmarks", {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : ""
+            }
+          })
+        ]);
+        setFiles(filesRes.data || []);
+        setRecentFiles(recentRes.data || []);
+        setBookmarks(bookmarkRes.data || []);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load files");
       } finally {
@@ -141,14 +163,14 @@ function StudentBrowseFiles() {
   const handleView = async (fileId) => {
     try {
       const token = sessionStorage.getItem("token");
-      const res = await axios.get(`/files/view/${fileId}`, {
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
-        responseType: "blob"
-      });
-      const fileUrl = URL.createObjectURL(res.data);
-      window.open(fileUrl, "_blank", "noopener,noreferrer");
+      if (!token) {
+        setActionMessage("Session expired. Please login again.");
+        return;
+      }
+      const viewUrl = `${axios.defaults.baseURL}/files/view/${fileId}?token=${encodeURIComponent(token)}`;
+      window.open(viewUrl, "_blank", "noopener,noreferrer");
     } catch (err) {
-      console.error("View failed", err);
+      setActionMessage(err?.response?.data?.message || "Unable to open this file");
     }
   };
 
@@ -160,15 +182,59 @@ function StudentBrowseFiles() {
         responseType: "blob"
       });
       const blobUrl = URL.createObjectURL(res.data);
+      const disposition = res.headers?.["content-disposition"] || "";
+      const match = disposition.match(/filename="?([^"]+)"?/i);
+      const resolvedName = match?.[1] || fileName;
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.setAttribute("download", fileName);
+      link.setAttribute("download", resolvedName);
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error("Download failed", err);
+      setActionMessage(err?.response?.data?.message || "Unable to download this file");
+    }
+  };
+
+  const handleBookmark = async (fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.post(
+        `/student/bookmarks/${fileId}`,
+        {},
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" }
+        }
+      );
+      setFiles((prev) =>
+        prev.map((file) =>
+          file._id === fileId ? { ...file, isBookmarked: Boolean(res.data.bookmarked) } : file
+        )
+      );
+
+      const bookmarksRes = await axios.get("/student/bookmarks", {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setBookmarks(bookmarksRes.data || []);
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Bookmark update failed");
+    }
+  };
+
+  const handleRequestAccess = async (fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      await axios.post(
+        `/student/access-requests/${fileId}`,
+        { reason: "Need this file for academic reference", durationMinutes: 120 },
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" }
+        }
+      );
+      setActionMessage("Access request submitted");
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to submit access request");
     }
   };
 
@@ -188,7 +254,9 @@ function StudentBrowseFiles() {
     <div className="space-y-6">
       <div className="rounded-2xl bg-[#64242F] text-[#DFD9D8] p-6 shadow-md">
         <h1 className="text-2xl font-bold">Browse Files</h1>
-        <p className="text-[#FC8F8F] mt-1">Department - Semester - Category - Files</p>
+        <p className="text-[#FC8F8F] mt-1">
+          Discover academic resources faster: pick department, semester, and category.
+        </p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border p-4 space-y-3">
@@ -212,6 +280,100 @@ function StudentBrowseFiles() {
           <span>{openCategory ? CATEGORY_LABELS[openCategory] : "Category"}</span>
         </div>
       </div>
+
+      {actionMessage && (
+        <div className="rounded-lg border border-[#E6C7CC] bg-[#FFF6F7] px-4 py-3 text-sm text-[#64242F]">
+          {actionMessage}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl border p-4">
+            <p className="text-sm font-semibold text-slate-800 mb-2">Recent Files</p>
+            {recentFiles.length === 0 ? (
+              <p className="text-xs text-slate-500">No recent activity yet</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {recentFiles.map((file) => (
+                  <div key={file._id} className="border rounded-lg p-2">
+                    <p className="text-sm font-medium text-slate-800 truncate">{file.fileName}</p>
+                    <p className="text-xs text-slate-500">
+                      {file.subject || "No subject"} • {file.lastAction} • {formatDateTime(file.lastAccessedAt)}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleView(file._id)}
+                        disabled={!file.canAccess}
+                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(file._id, file.fileName)}
+                        disabled={!file.canAccess}
+                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {recentFiles.length > 3 && (
+              <p className="mt-2 text-[11px] text-slate-500">Showing 3 at a time. Scroll for more.</p>
+            )}
+          </div>
+          <div className="bg-white rounded-xl border p-4">
+            <p className="text-sm font-semibold text-slate-800 mb-2">Bookmarked Files</p>
+            {bookmarks.length === 0 ? (
+              <p className="text-xs text-slate-500">No bookmarks yet</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {bookmarks.map((file) => (
+                  <div key={file._id} className="border rounded-lg p-2">
+                    <p className="text-sm font-medium text-slate-800 truncate">{file.fileName}</p>
+                    <p className="text-xs text-slate-500">
+                      {file.subject || "No subject"} • Bookmarked on {formatDateTime(file.bookmarkedAt)}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleView(file._id)}
+                        disabled={!file.canAccess}
+                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(file._id, file.fileName)}
+                        disabled={!file.canAccess}
+                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        Download
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBookmark(file._id)}
+                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100"
+                      >
+                        Remove Star
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {bookmarks.length > 3 && (
+              <p className="mt-2 text-[11px] text-slate-500">Showing 3 at a time. Scroll for more.</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {loading && <div className="bg-white rounded-xl border p-6 text-gray-500">Loading files...</div>}
       {!loading && error && <div className="bg-white rounded-xl border p-6 text-red-600">{error}</div>}
@@ -313,7 +475,7 @@ function StudentBrowseFiles() {
                         isOpen ? "max-h-96 opacity-100 px-4 pb-4" : "max-h-0 opacity-0"
                       }`}
                     >
-                      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                         {filesInCategory.length > 0 ? (
                           filesInCategory.map((file) => (
                             <div
@@ -337,7 +499,17 @@ function StudentBrowseFiles() {
                                   </span>
                                   <button
                                     type="button"
+                                    onClick={() => handleBookmark(file._id)}
+                                    className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded border ${
+                                      file.isBookmarked ? "bg-yellow-100 border-yellow-300" : "hover:bg-gray-100"
+                                    }`}
+                                  >
+                                    <Star size={14} /> {file.isBookmarked ? "Starred" : "Star"}
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={() => handleView(file._id)}
+                                    disabled={!file.canAccess}
                                     className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
                                   >
                                     <Eye size={14} /> View
@@ -345,10 +517,20 @@ function StudentBrowseFiles() {
                                   <button
                                     type="button"
                                     onClick={() => handleDownload(file._id, file.fileName)}
+                                    disabled={!file.canAccess}
                                     className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
                                   >
                                     <Download size={14} /> Download
                                   </button>
+                                  {!file.canAccess && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRequestAccess(file._id)}
+                                      className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#64242F] text-[#64242F] hover:bg-[#DFD9D8]"
+                                    >
+                                      Request Access
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>

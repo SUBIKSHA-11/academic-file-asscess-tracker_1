@@ -1,12 +1,38 @@
 const AcademicFile = require("../models/AcademicFile");
 const Department = require("../models/Department");
 const ActivityLog = require("../models/ActivityLog");
+const FileBookmark = require("../models/FileBookmark");
+const TemporaryAccess = require("../models/TemporaryAccess");
+const AccessRequest = require("../models/AccessRequest");
 const mongoose = require("mongoose");
+const normalizeSensitivity = (value) => {
+  const normalized = String(value || "PUBLIC").trim().toUpperCase();
+  if (["PUBLIC", "INTERNAL", "CONFIDENTIAL"].includes(normalized)) {
+    return normalized;
+  }
+  return "PUBLIC";
+};
 
 const getStudentFiles = async (req, res) => {
   try {
-    const files = await AcademicFile.find({ sensitivity: "PUBLIC" })
-      .select("fileName semester category department subject downloadCount createdAt")
+    const [bookmarks, tempAccess] = await Promise.all([
+      FileBookmark.find({ user: req.user.userId }).select("file").lean(),
+      TemporaryAccess.find({
+        user: req.user.userId,
+        expiresAt: { $gt: new Date() }
+      }).select("file").lean()
+    ]);
+
+    const bookmarkedIds = new Set(bookmarks.map((b) => String(b.file)));
+    const tempAccessIds = new Set(tempAccess.map((a) => String(a.file)));
+
+    const files = await AcademicFile.find({
+      $and: [
+        { $or: [{ latestVersion: true }, { latestVersion: { $exists: false } }] },
+        { $or: [{ status: "APPROVED" }, { status: { $exists: false } }] }
+      ]
+    })
+      .select("fileName semester category department subject downloadCount createdAt sensitivity")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -31,7 +57,10 @@ const getStudentFiles = async (req, res) => {
       },
       subject: file.subject,
       downloadCount: file.downloadCount || 0,
-      createdAt: file.createdAt
+      createdAt: file.createdAt,
+      sensitivity: normalizeSensitivity(file.sensitivity),
+      canAccess: normalizeSensitivity(file.sensitivity) === "PUBLIC" || tempAccessIds.has(String(file._id)),
+      isBookmarked: bookmarkedIds.has(String(file._id))
     }));
 
     res.json(normalized);
@@ -142,7 +171,7 @@ const getStudentAccessGrid = async (req, res) => {
 const getRecentAccess = async (req, res) => {
   try {
     const logs = await ActivityLog.find({
-      user: req.user.id,
+      user: req.user.userId,
       action: { $in: ["VIEW", "DOWNLOAD"] }
     })
       .populate("file", "fileName subject")
@@ -156,9 +185,190 @@ const getRecentAccess = async (req, res) => {
   }
 };
 
+const getBookmarkedFiles = async (req, res) => {
+  try {
+    const activeAccess = await TemporaryAccess.find({
+      user: req.user.userId,
+      expiresAt: { $gt: new Date() }
+    }).select("file").lean();
+    const tempAccessIds = new Set(activeAccess.map((a) => String(a.file)));
+
+    const bookmarks = await FileBookmark.find({ user: req.user.userId })
+      .populate({
+        path: "file",
+        select: "fileName subject semester category department sensitivity status createdAt latestVersion",
+        match: {
+          $or: [{ latestVersion: true }, { latestVersion: { $exists: false } }]
+        }
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const data = bookmarks
+      .filter((item) => item.file)
+      .map((item) => ({
+        ...item.file,
+        sensitivity: normalizeSensitivity(item.file.sensitivity),
+        canAccess:
+          normalizeSensitivity(item.file.sensitivity) === "PUBLIC" ||
+          tempAccessIds.has(String(item.file._id)),
+        isBookmarked: true,
+        bookmarkedAt: item.createdAt
+      }));
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch bookmarks" });
+  }
+};
+
+const toggleBookmark = async (req, res) => {
+  try {
+    const file = await AcademicFile.findById(req.params.fileId).select("_id");
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    const existing = await FileBookmark.findOne({
+      user: req.user.userId,
+      file: file._id
+    });
+
+    if (existing) {
+      await existing.deleteOne();
+      return res.json({ message: "Bookmark removed", bookmarked: false });
+    }
+
+    await FileBookmark.create({
+      user: req.user.userId,
+      file: file._id
+    });
+
+    await ActivityLog.create({
+      user: req.user.userId,
+      file: file._id,
+      action: "BOOKMARK",
+      ipAddress: req.ip
+    });
+
+    return res.json({ message: "Bookmarked", bookmarked: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update bookmark" });
+  }
+};
+
+const getRecentFiles = async (req, res) => {
+  try {
+    const activeAccess = await TemporaryAccess.find({
+      user: req.user.userId,
+      expiresAt: { $gt: new Date() }
+    }).select("file").lean();
+    const tempAccessIds = new Set(activeAccess.map((a) => String(a.file)));
+
+    const logs = await ActivityLog.find({
+      user: req.user.userId,
+      action: { $in: ["VIEW", "DOWNLOAD"] }
+    })
+      .populate("file", "fileName subject semester category department sensitivity status latestVersion")
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    const seen = new Set();
+    const recent = [];
+    for (const log of logs) {
+      if (!log.file || !log.file._id) continue;
+      if (log.file.latestVersion === false) continue;
+      const fileId = String(log.file._id);
+      if (seen.has(fileId)) continue;
+      seen.add(fileId);
+      const sensitivity = normalizeSensitivity(log.file.sensitivity);
+      recent.push({
+        ...log.file,
+        sensitivity,
+        canAccess: sensitivity === "PUBLIC" || tempAccessIds.has(fileId),
+        lastAction: log.action,
+        lastAccessedAt: log.createdAt
+      });
+      if (recent.length >= 10) break;
+    }
+
+    res.json(recent);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch recent files" });
+  }
+};
+
+const requestRestrictedAccess = async (req, res) => {
+  try {
+    const { reason, durationMinutes = 60 } = req.body;
+    const file = await AcademicFile.findById(req.params.fileId);
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+    const isPublished = !file.status || file.status === "APPROVED";
+    if (!isPublished) {
+      return res.status(400).json({ message: "File is not published yet" });
+    }
+    if (normalizeSensitivity(file.sensitivity) === "PUBLIC") {
+      return res.status(400).json({ message: "Public file does not require request" });
+    }
+
+    const existing = await AccessRequest.findOne({
+      user: req.user.userId,
+      file: file._id,
+      status: "PENDING"
+    });
+    if (existing) {
+      return res.status(409).json({ message: "Pending request already exists" });
+    }
+
+    const requestDoc = await AccessRequest.create({
+      user: req.user.userId,
+      file: file._id,
+      reason: reason || "",
+      requestedDurationMinutes: Number(durationMinutes) || 60
+    });
+
+    await ActivityLog.create({
+      user: req.user.userId,
+      file: file._id,
+      action: "REQUEST_ACCESS",
+      ipAddress: req.ip,
+      metadata: { requestId: String(requestDoc._id) }
+    });
+
+    res.status(201).json({ message: "Access request submitted", request: requestDoc });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to submit request" });
+  }
+};
+
+const getMyAccessRequests = async (req, res) => {
+  try {
+    const requests = await AccessRequest.find({ user: req.user.userId })
+      .populate("file", "fileName subject sensitivity")
+      .populate("reviewedBy", "name role")
+      .sort({ createdAt: -1 });
+
+    res.json(requests);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch access requests" });
+  }
+};
+
 module.exports = {
   getStudentFiles,
   getStudentMyStats,
   getStudentAccessGrid,
-  getRecentAccess
+  getRecentAccess,
+  getBookmarkedFiles,
+  toggleBookmark,
+  getRecentFiles,
+  requestRestrictedAccess,
+  getMyAccessRequests
 };

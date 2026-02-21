@@ -49,9 +49,12 @@ function MyFiles() {
         responseType: "blob"
       });
       const url = window.URL.createObjectURL(res.data);
+      const disposition = res.headers?.["content-disposition"] || "";
+      const match = disposition.match(/filename="?([^"]+)"?/i);
+      const resolvedName = match?.[1] || fileName;
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", fileName);
+      link.setAttribute("download", resolvedName);
       document.body.appendChild(link);
       link.click();
       link.remove();

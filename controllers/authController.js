@@ -150,8 +150,41 @@ const getMe = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email, newPassword, confirmPassword } = req.body;
+
+    if (!email || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "Email and password fields are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found with this email" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    res.json({ message: "Password reset successful. Please login with your new password." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to reset password" });
+  }
+};
+
 module.exports = {
   register,
   login,
-  getMe
+  getMe,
+  forgotPassword
 };

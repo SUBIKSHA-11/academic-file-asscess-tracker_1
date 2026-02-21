@@ -32,6 +32,40 @@ router.get(
   authMiddleware,
   fileController.filterFiles
 );
+// Pending review files
+router.get(
+  "/pending",
+  authMiddleware,
+  roleMiddleware(["ADMIN", "FACULTY"]),
+  fileController.getPendingFiles
+);
+// Approve file
+router.patch(
+  "/:id/approve",
+  authMiddleware,
+  roleMiddleware(["ADMIN", "FACULTY"]),
+  fileController.approveFile
+);
+// Reject file
+router.patch(
+  "/:id/reject",
+  authMiddleware,
+  roleMiddleware(["ADMIN", "FACULTY"]),
+  fileController.rejectFile
+);
+// Version history
+router.get(
+  "/:id/versions",
+  authMiddleware,
+  fileController.getFileVersions
+);
+// Restore a version as latest
+router.post(
+  "/:id/restore",
+  authMiddleware,
+  roleMiddleware(["ADMIN", "FACULTY"]),
+  fileController.restoreVersion
+);
 // Delete File
 router.delete(
   "/:id",
