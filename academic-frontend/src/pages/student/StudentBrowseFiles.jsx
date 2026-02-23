@@ -9,7 +9,12 @@ import {
   ClipboardCheck,
   Folder,
   FlaskConical,
-  Star
+  Star,
+  FolderPlus,
+  CalendarPlus,
+  CheckCircle2,
+  Trash2,
+  MessageSquare
 } from "lucide-react";
 import axios from "../../api/axios";
 
@@ -60,6 +65,14 @@ function StudentBrowseFiles() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [studyFolders, setStudyFolders] = useState([]);
+  const [studyPlan, setStudyPlan] = useState([]);
+  const [selectedFolderId, setSelectedFolderId] = useState("");
+  const [folderForm, setFolderForm] = useState({ name: "", subject: "" });
+  const [planDraftByFile, setPlanDraftByFile] = useState({});
+  const [discussionByFile, setDiscussionByFile] = useState({});
+  const [discussionInputByFile, setDiscussionInputByFile] = useState({});
+  const [openDiscussionFileId, setOpenDiscussionFileId] = useState("");
   const [search, setSearch] = useState("");
   const [activeFeedbackFileId, setActiveFeedbackFileId] = useState("");
   const [feedbackForm, setFeedbackForm] = useState({
@@ -71,6 +84,7 @@ function StudentBrowseFiles() {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
   const [openCategory, setOpenCategory] = useState("");
+  const [browseToolsTab, setBrowseToolsTab] = useState("files");
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -78,7 +92,7 @@ function StudentBrowseFiles() {
         setLoading(true);
         setError("");
         const token = sessionStorage.getItem("token");
-        const [filesRes, recentRes, bookmarkRes] = await Promise.all([
+        const [filesRes, recentRes, bookmarkRes, foldersRes, planRes] = await Promise.all([
           axios.get("/student/files", {
           headers: {
             Authorization: token ? `Bearer ${token}` : ""
@@ -93,11 +107,23 @@ function StudentBrowseFiles() {
             headers: {
               Authorization: token ? `Bearer ${token}` : ""
             }
+          }),
+          axios.get("/student/study-folders", {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : ""
+            }
+          }),
+          axios.get("/student/study-plan", {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : ""
+            }
           })
         ]);
         setFiles(filesRes.data || []);
         setRecentFiles(recentRes.data || []);
         setBookmarks(bookmarkRes.data || []);
+        setStudyFolders(foldersRes.data || []);
+        setStudyPlan(planRes.data || []);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load files");
       } finally {
@@ -228,6 +254,174 @@ function StudentBrowseFiles() {
     }
   };
 
+  const handleCreateStudyFolder = async (event) => {
+    event.preventDefault();
+    try {
+      const token = sessionStorage.getItem("token");
+      await axios.post(
+        "/student/study-folders",
+        {
+          name: folderForm.name,
+          subject: folderForm.subject
+        },
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" }
+        }
+      );
+
+      const foldersRes = await axios.get("/student/study-folders", {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setStudyFolders(foldersRes.data || []);
+      setFolderForm({ name: "", subject: "" });
+      setActionMessage("Study folder created.");
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to create study folder");
+    }
+  };
+
+  const handleSaveToFolder = async (fileId) => {
+    try {
+      if (!selectedFolderId) {
+        setActionMessage("Select a study folder first.");
+        return;
+      }
+      const token = sessionStorage.getItem("token");
+      await axios.post(`/student/study-folders/${selectedFolderId}/files/${fileId}`, {}, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+
+      const foldersRes = await axios.get("/student/study-folders", {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setStudyFolders(foldersRes.data || []);
+      setActionMessage("File saved to study folder.");
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to save file to folder");
+    }
+  };
+
+  const handleRemoveFromFolder = async (folderId, fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      await axios.delete(`/student/study-folders/${folderId}/files/${fileId}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+
+      const foldersRes = await axios.get("/student/study-folders", {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setStudyFolders(foldersRes.data || []);
+      setActionMessage("File removed from study folder.");
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to remove file from folder");
+    }
+  };
+
+  const handleAddToStudyPlan = async (fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const draft = planDraftByFile[fileId] || {};
+      await axios.post(
+        `/student/study-plan/${fileId}`,
+        {
+          reminderAt: draft.reminderAt || undefined,
+          note: draft.note || ""
+        },
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" }
+        }
+      );
+
+      const planRes = await axios.get("/student/study-plan", {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setStudyPlan(planRes.data || []);
+      setPlanDraftByFile((prev) => ({ ...prev, [fileId]: { reminderAt: "", note: "" } }));
+      setActionMessage("Added to study plan.");
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to add to study plan");
+    }
+  };
+
+  const handleToggleStudyPlanComplete = async (item) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      await axios.patch(
+        `/student/study-plan/${item._id}`,
+        { isCompleted: !item.isCompleted },
+        { headers: { Authorization: token ? `Bearer ${token}` : "" } }
+      );
+
+      const planRes = await axios.get("/student/study-plan", {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setStudyPlan(planRes.data || []);
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to update study plan");
+    }
+  };
+
+  const handleDeleteStudyPlanItem = async (itemId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      await axios.delete(`/student/study-plan/${itemId}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+
+      const planRes = await axios.get("/student/study-plan", {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setStudyPlan(planRes.data || []);
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to delete study plan item");
+    }
+  };
+
+  const loadDiscussion = async (fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get(`/discussions/${fileId}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setDiscussionByFile((prev) => ({ ...prev, [fileId]: res.data || [] }));
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to load discussion");
+    }
+  };
+
+  const handleToggleDiscussion = async (fileId) => {
+    const isOpen = openDiscussionFileId === fileId;
+    if (isOpen) {
+      setOpenDiscussionFileId("");
+      return;
+    }
+    setOpenDiscussionFileId(fileId);
+    if (!discussionByFile[fileId]) {
+      await loadDiscussion(fileId);
+    }
+  };
+
+  const handleAddDiscussionComment = async (fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const message = discussionInputByFile[fileId] || "";
+      if (!message.trim()) {
+        setActionMessage("Enter a message before posting.");
+        return;
+      }
+      await axios.post(
+        `/discussions/${fileId}`,
+        { message },
+        { headers: { Authorization: token ? `Bearer ${token}` : "" } }
+      );
+      setDiscussionInputByFile((prev) => ({ ...prev, [fileId]: "" }));
+      await loadDiscussion(fileId);
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to post comment");
+    }
+  };
+
   const handleRequestAccess = async (fileId) => {
     try {
       const token = sessionStorage.getItem("token");
@@ -353,201 +547,347 @@ function StudentBrowseFiles() {
         </div>
       )}
 
-      {!loading && !error && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border p-4">
-            <p className="text-sm font-semibold text-slate-800 mb-2">Recent Files</p>
-            {recentFiles.length === 0 ? (
-              <p className="text-xs text-slate-500">No recent activity yet</p>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                {recentFiles.map((file) => (
-                  <div key={file._id} className="border rounded-lg p-2">
-                    <p className="text-sm font-medium text-slate-800 truncate">{file.fileName}</p>
-                    <p className="text-xs text-slate-500">
-                      {file.subject || "No subject"} • {file.lastAction} • {formatDateTime(file.lastAccessedAt)}
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleView(file._id)}
-                        disabled={!file.canAccess}
-                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(file._id, file.fileName)}
-                        disabled={!file.canAccess}
-                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
-                      >
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {recentFiles.length > 3 && (
-              <p className="mt-2 text-[11px] text-slate-500">Showing 3 at a time. Scroll for more.</p>
-            )}
-          </div>
-          <div className="bg-white rounded-xl border p-4">
-            <p className="text-sm font-semibold text-slate-800 mb-2">Bookmarked Files</p>
-            {bookmarks.length === 0 ? (
-              <p className="text-xs text-slate-500">No bookmarks yet</p>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                {bookmarks.map((file) => (
-                  <div key={file._id} className="border rounded-lg p-2">
-                    <p className="text-sm font-medium text-slate-800 truncate">{file.fileName}</p>
-                    <p className="text-xs text-slate-500">
-                      {file.subject || "No subject"} • Bookmarked on {formatDateTime(file.bookmarkedAt)}
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleView(file._id)}
-                        disabled={!file.canAccess}
-                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(file._id, file.fileName)}
-                        disabled={!file.canAccess}
-                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
-                      >
-                        Download
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleBookmark(file._id)}
-                        className="text-xs px-2 py-1 rounded border hover:bg-gray-100"
-                      >
-                        Remove Star
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {bookmarks.length > 3 && (
-              <p className="mt-2 text-[11px] text-slate-500">Showing 3 at a time. Scroll for more.</p>
-            )}
-          </div>
+      <section className="rounded-xl border bg-white p-4">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setBrowseToolsTab("files")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              browseToolsTab === "files" ? "bg-[#64242F] text-white" : "border bg-white text-slate-700"
+            }`}
+          >
+            Files
+          </button>
+          <button
+            type="button"
+            onClick={() => setBrowseToolsTab("folders")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              browseToolsTab === "folders" ? "bg-[#64242F] text-white" : "border bg-white text-slate-700"
+            }`}
+          >
+            Personal Study Folder
+          </button>
+          <button
+            type="button"
+            onClick={() => setBrowseToolsTab("planner")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              browseToolsTab === "planner" ? "bg-[#64242F] text-white" : "border bg-white text-slate-700"
+            }`}
+          >
+            Study Planner
+          </button>
+          <button
+            type="button"
+            onClick={() => setBrowseToolsTab("recent")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              browseToolsTab === "recent" ? "bg-[#64242F] text-white" : "border bg-white text-slate-700"
+            }`}
+          >
+            Recent Files
+          </button>
+          <button
+            type="button"
+            onClick={() => setBrowseToolsTab("bookmarks")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              browseToolsTab === "bookmarks" ? "bg-[#64242F] text-white" : "border bg-white text-slate-700"
+            }`}
+          >
+            Bookmarked Files
+          </button>
         </div>
-      )}
 
-      {loading && <div className="bg-white rounded-xl border p-6 text-gray-500">Loading files...</div>}
-      {!loading && error && <div className="bg-white rounded-xl border p-6 text-red-600">{error}</div>}
-      {!loading && !error && departments.length === 0 && (
-        <div className="bg-white rounded-xl border p-6 text-gray-600">No files available</div>
-      )}
+        {loading ? (
+          <div className="rounded-lg border p-6 text-sm text-gray-500">Loading browse tools...</div>
+        ) : error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-600">{error}</div>
+        ) : (
+          <div className="max-h-[360px] overflow-y-auto pr-1">
+            {browseToolsTab === "folders" && (
+              <div className="space-y-3">
+                <form onSubmit={handleCreateStudyFolder} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input
+                    value={folderForm.name}
+                    onChange={(event) => setFolderForm((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="Folder name"
+                    required
+                    className="h-9 rounded border px-2 text-sm"
+                  />
+                  <input
+                    value={folderForm.subject}
+                    onChange={(event) => setFolderForm((prev) => ({ ...prev, subject: event.target.value }))}
+                    placeholder="Subject (optional)"
+                    className="h-9 rounded border px-2 text-sm"
+                  />
+                  <button type="submit" className="h-9 rounded bg-[#64242F] text-white text-sm">
+                    Create
+                  </button>
+                </form>
 
-      {!loading && !error && departments.length > 0 && (
-        <div className="space-y-4">
-          {(selectedDepartment || selectedSemester || openCategory) && (
-            <button
-              type="button"
-              onClick={goBack}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border bg-white hover:bg-slate-50 text-sm"
-            >
-              <ArrowLeft size={16} /> Back
-            </button>
-          )}
-
-          {!selectedDepartment && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {departments.map((dept) => (
-                <button
-                  key={dept.name}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDepartment(dept.name);
-                    setSelectedSemester("");
-                    setOpenCategory("");
-                  }}
-                  className="text-left bg-white rounded-xl border shadow-sm p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                <select
+                  value={selectedFolderId}
+                  onChange={(event) => setSelectedFolderId(event.target.value)}
+                  className="h-9 rounded border px-2 text-sm w-full"
                 >
-                  <p className="text-lg font-semibold text-slate-800">{dept.name}</p>
-                  <p className="text-xs mt-2 inline-block bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
-                    {dept.count} files
-                  </p>
-                </button>
-              ))}
-            </div>
+                  <option value="">Select folder to save files</option>
+                  {studyFolders.map((folder) => (
+                    <option key={folder._id} value={folder._id}>
+                      {folder.name} {folder.subject ? `(${folder.subject})` : ""} - {folder.files?.length || 0} files
+                    </option>
+                  ))}
+                </select>
+
+                {selectedFolderId ? (
+                  <div className="space-y-2">
+                    {(studyFolders.find((folder) => folder._id === selectedFolderId)?.files || []).map((file) => (
+                      <div key={file._id} className="flex items-center justify-between rounded border px-2 py-2">
+                        <div>
+                          <p className="text-xs font-medium text-slate-700">{file.fileName}</p>
+                          <p className="text-[11px] text-slate-500">{file.subject || "No subject"}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFromFolder(selectedFolderId, file._id)}
+                          className="text-xs text-rose-700 hover:text-rose-900"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">Choose a folder to view/manage saved files.</p>
+                )}
+              </div>
+            )}
+
+            {browseToolsTab === "planner" && (
+              <div className="space-y-2">
+                {studyPlan.length === 0 ? (
+                  <p className="text-xs text-slate-500">No study plan items yet.</p>
+                ) : (
+                  studyPlan.map((item) => (
+                    <div key={item._id} className="rounded border px-2 py-2">
+                      <p className="text-xs font-semibold text-slate-800">{item.file?.fileName || "File removed"}</p>
+                      <p className="text-[11px] text-slate-500">
+                        Reminder: {item.reminderAt ? formatDateTime(item.reminderAt) : "Not set"}
+                      </p>
+                      {item.note ? <p className="text-[11px] text-slate-600 mt-1">{item.note}</p> : null}
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStudyPlanComplete(item)}
+                          className={`text-xs px-2 py-1 rounded border ${
+                            item.isCompleted
+                              ? "bg-emerald-100 border-emerald-300 text-emerald-700"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          <CheckCircle2 size={12} className="inline mr-1" />
+                          {item.isCompleted ? "Completed" : "Mark Complete"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStudyPlanItem(item._id)}
+                          className="text-xs px-2 py-1 rounded border text-rose-700 hover:bg-rose-50"
+                        >
+                          <Trash2 size={12} className="inline mr-1" />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {browseToolsTab === "recent" && (
+              <div className="space-y-2">
+                {recentFiles.length === 0 ? (
+                  <p className="text-xs text-slate-500">No recent activity yet</p>
+                ) : (
+                  recentFiles.map((file) => (
+                    <div key={file._id} className="border rounded-lg p-2">
+                      <p className="text-sm font-medium text-slate-800 truncate">{file.fileName}</p>
+                      <p className="text-xs text-slate-500">
+                        {file.subject || "No subject"} • {file.lastAction} • {formatDateTime(file.lastAccessedAt)}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleView(file._id)}
+                          disabled={!file.canAccess}
+                          className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(file._id, file.fileName)}
+                          disabled={!file.canAccess}
+                          className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                        >
+                          Download
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {browseToolsTab === "bookmarks" && (
+              <div className="space-y-2">
+                {bookmarks.length === 0 ? (
+                  <p className="text-xs text-slate-500">No bookmarks yet</p>
+                ) : (
+                  bookmarks.map((file) => (
+                    <div key={file._id} className="border rounded-lg p-2">
+                      <p className="text-sm font-medium text-slate-800 truncate">{file.fileName}</p>
+                      <p className="text-xs text-slate-500">
+                        {file.subject || "No subject"} • Bookmarked on {formatDateTime(file.bookmarkedAt)}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleView(file._id)}
+                          disabled={!file.canAccess}
+                          className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(file._id, file.fileName)}
+                          disabled={!file.canAccess}
+                          className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
+                        >
+                          Download
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBookmark(file._id)}
+                          className="text-xs px-2 py-1 rounded border hover:bg-gray-100"
+                        >
+                          Remove Star
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {browseToolsTab === "files" && (
+        <>
+          {!loading && error && <div className="bg-white rounded-xl border p-6 text-red-600">{error}</div>}
+          {!loading && !error && departments.length === 0 && (
+            <div className="bg-white rounded-xl border p-6 text-gray-600">No files available</div>
           )}
 
-          {selectedDepartment && !selectedSemester && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {semesters.map((sem) => (
+          {!loading && !error && departments.length > 0 && (
+            <div className="space-y-4">
+              {(selectedDepartment || selectedSemester || openCategory) && (
                 <button
-                  key={sem.name}
                   type="button"
-                  onClick={() => {
-                    setSelectedSemester(sem.name);
-                    setOpenCategory("");
-                  }}
-                  className="text-left bg-white rounded-xl border shadow-sm p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                  onClick={goBack}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border bg-white hover:bg-slate-50 text-sm"
                 >
-                  <p className="text-lg font-semibold text-slate-800">{sem.name}</p>
-                  <p className="text-xs mt-2 inline-block bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
-                    {sem.count} files
-                  </p>
+                  <ArrowLeft size={16} /> Back
                 </button>
-              ))}
-            </div>
-          )}
+              )}
 
-          {selectedDepartment && selectedSemester && (
-            <div className="space-y-3">
-              {categories.map((cat) => {
-                const filesInCategory =
-                  grouped[selectedDepartment]?.[selectedSemester]?.[cat.key] || [];
-                const isOpen = openCategory === cat.key;
-                const Icon = CATEGORY_STYLES[cat.key]?.icon || Folder;
-                const chipClass = CATEGORY_STYLES[cat.key]?.chip || "bg-gray-100 text-gray-700";
-
-                return (
-                  <div
-                    key={cat.key}
-                    className="bg-white rounded-xl border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                  >
+              {!selectedDepartment && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {departments.map((dept) => (
                     <button
+                      key={dept.name}
                       type="button"
-                      onClick={() => setOpenCategory((prev) => (prev === cat.key ? "" : cat.key))}
-                      className="w-full flex items-center justify-between px-5 py-4 text-left"
+                      onClick={() => {
+                        setSelectedDepartment(dept.name);
+                        setSelectedSemester("");
+                        setOpenCategory("");
+                      }}
+                      className="text-left bg-white rounded-xl border shadow-sm p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                     >
-                      <div className="flex items-center gap-2">
-                        <Icon size={18} className="text-slate-700" />
-                        <p className="text-base font-semibold text-slate-800">{cat.label}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${chipClass}`}>
-                          {cat.count} files
-                        </span>
-                        <ChevronRight
-                          size={16}
-                          className={`transition-transform duration-300 ${isOpen ? "rotate-90" : ""}`}
-                        />
-                      </div>
+                      <p className="text-lg font-semibold text-slate-800">{dept.name}</p>
+                      <p className="text-xs mt-2 inline-block bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
+                        {dept.count} files
+                      </p>
                     </button>
+                  ))}
+                </div>
+              )}
 
-                    <div
-                      className={`overflow-hidden transition-all duration-300 ${
-                        isOpen ? "max-h-96 opacity-100 px-4 pb-4" : "max-h-0 opacity-0"
-                      }`}
+              {selectedDepartment && !selectedSemester && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {semesters.map((sem) => (
+                    <button
+                      key={sem.name}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSemester(sem.name);
+                        setOpenCategory("");
+                      }}
+                      className="text-left bg-white rounded-xl border shadow-sm p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                     >
-                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                        {filesInCategory.length > 0 ? (
-                          filesInCategory.map((file) => (
-                            <div
-                              key={file._id}
-                              className="border rounded-lg p-3 hover:bg-gray-50 transition"
-                            >
+                      <p className="text-lg font-semibold text-slate-800">{sem.name}</p>
+                      <p className="text-xs mt-2 inline-block bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
+                        {sem.count} files
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {selectedDepartment && selectedSemester && (
+                <div className="space-y-3">
+                  {categories.map((cat) => {
+                    const filesInCategory =
+                      grouped[selectedDepartment]?.[selectedSemester]?.[cat.key] || [];
+                    const isOpen = openCategory === cat.key;
+                    const Icon = CATEGORY_STYLES[cat.key]?.icon || Folder;
+                    const chipClass = CATEGORY_STYLES[cat.key]?.chip || "bg-gray-100 text-gray-700";
+
+                    return (
+                      <div
+                        key={cat.key}
+                        className="bg-white rounded-xl border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setOpenCategory((prev) => (prev === cat.key ? "" : cat.key))}
+                          className="w-full flex items-center justify-between px-5 py-4 text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon size={18} className="text-slate-700" />
+                            <p className="text-base font-semibold text-slate-800">{cat.label}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-1 rounded-full ${chipClass}`}>
+                              {cat.count} files
+                            </span>
+                            <ChevronRight
+                              size={16}
+                              className={`transition-transform duration-300 ${isOpen ? "rotate-90" : ""}`}
+                            />
+                          </div>
+                        </button>
+
+                        <div
+                          className={`overflow-hidden transition-all duration-300 ${
+                            isOpen ? "max-h-96 opacity-100 px-4 pb-4" : "max-h-0 opacity-0"
+                          }`}
+                        >
+                          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                            {filesInCategory.length > 0 ? (
+                              filesInCategory.map((file) => (
+                                <div
+                                  key={file._id}
+                                  className="border rounded-lg p-3 hover:bg-gray-50 transition"
+                                >
                               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
                                   <p className="font-medium text-gray-800 break-words">{file.fileName}</p>
@@ -578,10 +918,25 @@ function StudentBrowseFiles() {
                                   </button>
                                   <button
                                     type="button"
+                                    onClick={() => handleSaveToFolder(file._id)}
+                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
+                                  >
+                                    <FolderPlus size={14} /> Save Folder
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={() => handleOpenFeedback(file._id)}
                                     className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
                                   >
                                     Rate
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleDiscussion(file._id)}
+                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
+                                  >
+                                    <MessageSquare size={14} />
+                                    Discussion
                                   </button>
                                   <button
                                     type="button"
@@ -610,6 +965,90 @@ function StudentBrowseFiles() {
                                   )}
                                 </div>
                               </div>
+
+                              <div className="mt-2 flex flex-wrap items-center gap-2 rounded border bg-slate-50 px-2 py-2">
+                                <input
+                                  type="datetime-local"
+                                  value={planDraftByFile[file._id]?.reminderAt || ""}
+                                  onChange={(event) =>
+                                    setPlanDraftByFile((prev) => ({
+                                      ...prev,
+                                      [file._id]: {
+                                        ...prev[file._id],
+                                        reminderAt: event.target.value
+                                      }
+                                    }))
+                                  }
+                                  className="h-8 rounded border px-2 text-xs"
+                                />
+                                <input
+                                  type="text"
+                                  value={planDraftByFile[file._id]?.note || ""}
+                                  onChange={(event) =>
+                                    setPlanDraftByFile((prev) => ({
+                                      ...prev,
+                                      [file._id]: {
+                                        ...prev[file._id],
+                                        note: event.target.value
+                                      }
+                                    }))
+                                  }
+                                  placeholder="Study note"
+                                  className="h-8 rounded border px-2 text-xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddToStudyPlan(file._id)}
+                                  className="inline-flex h-8 items-center gap-1 rounded border px-2 text-xs hover:bg-white"
+                                >
+                                  <CalendarPlus size={12} />
+                                  Add to Study Plan
+                                </button>
+                              </div>
+
+                              {openDiscussionFileId === file._id && (
+                                <div className="mt-3 rounded-lg border bg-white p-3">
+                                  <p className="mb-2 text-xs font-semibold text-slate-700">Discussion</p>
+                                  <div className="max-h-40 space-y-2 overflow-y-auto pr-1">
+                                    {(discussionByFile[file._id] || []).length > 0 ? (
+                                      (discussionByFile[file._id] || []).map((comment) => (
+                                        <div key={comment._id} className="rounded border px-2 py-2">
+                                          <p className="text-xs font-semibold text-slate-800">
+                                            {comment.user?.name || "User"} ({comment.user?.role || comment.role})
+                                          </p>
+                                          <p className="mt-1 text-xs text-slate-700">{comment.message}</p>
+                                          <p className="mt-1 text-[11px] text-slate-500">
+                                            {formatDateTime(comment.createdAt)}
+                                          </p>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <p className="text-xs text-slate-500">No comments yet. Ask your doubt here.</p>
+                                    )}
+                                  </div>
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <input
+                                      type="text"
+                                      value={discussionInputByFile[file._id] || ""}
+                                      onChange={(event) =>
+                                        setDiscussionInputByFile((prev) => ({
+                                          ...prev,
+                                          [file._id]: event.target.value
+                                        }))
+                                      }
+                                      placeholder="Ask doubt / reply..."
+                                      className="h-8 w-full rounded border px-2 text-xs"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddDiscussionComment(file._id)}
+                                      className="h-8 rounded bg-[#64242F] px-3 text-xs text-white"
+                                    >
+                                      Post
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
 
                               {activeFeedbackFileId === file._id && (
                                 <div className="mt-3 rounded-lg border bg-white p-3">
@@ -681,19 +1120,21 @@ function StudentBrowseFiles() {
                                   </div>
                                 </div>
                               )}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-sm text-slate-500">No files added yet</div>
-                        )}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-sm text-slate-500">No files added yet</div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
