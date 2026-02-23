@@ -18,6 +18,7 @@ import FacultyMyFiles from "./pages/faculty/MyFiles";
 import FacultyDepartmentFiles from "./pages/faculty/DepartmentFiles";
 import FacultyUpload from "./pages/faculty/Upload";
 import FacultyAnalytics from "./pages/faculty/Analytics";
+import FacultyAccessLogs from "./pages/faculty/AccessLogs";
 import StudentLayout from "./layouts/StudentLayout";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentBrowseFiles from "./pages/student/StudentBrowseFiles";
@@ -56,6 +57,7 @@ function App() {
           <Route path="dashboard" element={<FacultyDashboard />} />
           <Route path="files" element={<FacultyMyFiles />} />
           <Route path="department-files" element={<FacultyDepartmentFiles />} />
+          <Route path="logs" element={<FacultyAccessLogs />} />
           <Route path="upload" element={<FacultyUpload />} />
           <Route path="analytics" element={<FacultyAnalytics />} />
         </Route>
