@@ -1,3 +1,63 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .theme-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 1.25rem;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  .theme-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+  }
+
+  .theme-card::before {
+    content: "";
+    position: absolute;
+    right: -56px;
+    top: -56px;
+    width: 220px;
+    height: 220px;
+    background: repeating-conic-gradient(
+      from 0deg,
+      rgba(255, 255, 255, 0.18) 0deg 7deg,
+      rgba(255, 255, 255, 0) 7deg 13deg
+    );
+    border-radius: 9999px;
+    pointer-events: none;
+  }
+
+  .theme-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .theme-card--admin {
+    background: linear-gradient(145deg, #d6e8ce, #c6dbbb);
+    color: #0c3c01;
+  }
+
+  .theme-card--faculty {
+    background: linear-gradient(145deg, #c8e4e7, #b6d8dd);
+    color: #0b2e33;
+  }
+
+  .theme-card--student {
+    background: linear-gradient(145deg, #f0d8dd, #e9c9d0);
+    color: #64242f;
+  }
+
+  .theme-surface {
+    border-radius: 1.25rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  }
+}

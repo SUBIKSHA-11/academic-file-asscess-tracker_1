@@ -12,13 +12,13 @@ function StudentLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 md:flex">
-      <aside className="md:w-64 w-full bg-[#64242F] text-white p-5 md:p-6 shadow-lg">
+      <aside className="md:w-64 w-full bg-[#64242F] text-white p-5 md:p-6 shadow-lg flex flex-col md:min-h-screen md:fixed md:inset-y-0 md:left-0 md:h-screen overflow-hidden">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Student Panel</h1>
           <p className="text-white/80 text-sm mt-1">Browse Academic Resources</p>
         </div>
 
-        <nav className="space-y-2">
+        <nav className="space-y-2 flex-1">
           <NavLink
             to="/student/dashboard"
             className={({ isActive }) =>
@@ -54,15 +54,17 @@ function StudentLayout() {
             logout();
             navigate("/");
           }}
-          className="mt-8 w-full text-left flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/95 hover:bg-white/20 transition-all duration-200"
+          className="mt-auto w-full text-left flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/95 hover:bg-white/20 transition-all duration-200"
         >
           <LogOut size={18} />
           Logout
         </button>
       </aside>
 
-      <main className="flex-1 p-4 md:p-8">
-        <Outlet />
+      <main className="flex-1 md:ml-64">
+        <div className="mx-auto max-w-[1400px] p-6 md:p-8">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

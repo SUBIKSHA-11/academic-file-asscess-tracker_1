@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "../api/axios";
 import { Users, UserCheck, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,14 +7,15 @@ function UsersPage() {
   const [stats, setStats] = useState({});
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     const res = await axios.get("/admin/stats");
     setStats(res.data);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStats();
+  }, [fetchStats]);
 
   return (
     <div>
@@ -60,14 +61,14 @@ function RoleCard({ icon, title, count, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer bg-[#5B6D49] text-[#F1F2ED] p-10 rounded-2xl shadow-lg border border-[#A2AC82] hover:bg-[#0C3C01] hover:scale-105 transition duration-300"
+      className="theme-card theme-card--admin min-h-[220px] cursor-pointer p-10 transition duration-300 hover:scale-[1.02]"
     >
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between text-[#0C3C01]">
         {icon}
-        <span className="text-4xl font-bold">{count}</span>
+        <span className="text-4xl font-black text-[#0C3C01]">{count}</span>
       </div>
 
-      <h3 className="mt-6 text-xl font-semibold">{title}</h3>
+      <h3 className="mt-6 text-xl font-semibold text-[#0C3C01]">{title}</h3>
     </div>
   );
 }

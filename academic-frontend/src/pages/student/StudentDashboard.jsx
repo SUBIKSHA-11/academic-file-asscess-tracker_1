@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
-import { Download, Eye, Fingerprint, Activity } from "lucide-react";
+import { Download, Eye, Fingerprint, Activity, Inbox } from "lucide-react";
 import Pagination from "../../components/Pagination";
 
 const getIntensityClass = (count) => {
-  if (count === 0) return "bg-[#DFD9D8]";
-  if (count <= 2) return "bg-[#FC8F8F]";
-  if (count <= 5) return "bg-[#E06D72]";
-  if (count <= 9) return "bg-[#B44446]";
+  if (count === 0) return "bg-[#F3E6E9]";
+  if (count <= 2) return "bg-[#E3B5BE]";
+  if (count <= 5) return "bg-[#C98390]";
+  if (count <= 9) return "bg-[#9C4556]";
   return "bg-[#64242F]";
 };
 
@@ -165,31 +165,31 @@ function StudentDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-[#64242F] text-[#DFD9D8] p-6 shadow-md">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold">Welcome back, {name}</h2>
-        <p className="text-[#FC8F8F] mt-1">Your personal usage stats and access records.</p>
+        <p className="mt-1 text-slate-600">Your personal usage stats and access records.</p>
       </section>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {cards.map((card) => (
           <div
             key={card.label}
-            className="rounded-xl bg-[#B44446] text-[#DFD9D8] p-5 shadow-md transition-all duration-300 hover:-translate-y-1 hover:bg-[#64242F] hover:shadow-xl"
+            className="theme-card theme-card--student min-h-[170px]"
           >
-            {card.icon}
-            <p className="text-sm mt-3 text-[#FC8F8F]">{card.label}</p>
-            <p className="text-3xl font-bold mt-1">{card.value}</p>
+            <div className="text-[#64242F]">{card.icon}</div>
+            <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-[#64242F]/80">{card.label}</p>
+            <p className="mt-2 text-4xl font-black leading-none text-[#64242F]">{card.value}</p>
           </div>
         ))}
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-xl bg-white border p-5 shadow-sm">
+        <div className="theme-card theme-card--student min-h-[170px]">
           <p className="text-xs text-slate-500">Current Streak</p>
           <p className="mt-1 text-2xl font-bold text-[#64242F]">🔥 {stats.currentStreak} days</p>
           <p className="text-xs text-slate-500 mt-1">Keep logging in daily to build consistency.</p>
         </div>
-        <div className="rounded-xl bg-white border p-5 shadow-sm">
+        <div className="theme-card theme-card--student min-h-[170px]">
           <p className="text-xs text-slate-500">Longest Streak</p>
           <p className="mt-1 text-2xl font-bold text-[#64242F]">🏆 {stats.longestStreak} days</p>
           <p className="text-xs text-slate-500 mt-1">Your best continuous login record.</p>
@@ -253,15 +253,15 @@ function StudentDashboard() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-lg border p-4">
+            <div className="theme-card theme-card--student min-h-[145px]">
               <p className="text-xs text-slate-500">Most Downloaded Category</p>
               <p className="text-xl font-bold text-slate-800 mt-1">{prettyCategory}</p>
             </div>
-            <div className="rounded-lg border p-4">
+            <div className="theme-card theme-card--student min-h-[145px]">
               <p className="text-xs text-slate-500">Total Activity</p>
               <p className="text-xl font-bold text-slate-800 mt-1">{stats.totalAccessActions}</p>
             </div>
-            <div className="rounded-lg border p-4">
+            <div className="theme-card theme-card--student min-h-[145px]">
               <p className="text-xs text-slate-500">Active Days</p>
               <p className="text-xl font-bold text-slate-800 mt-1">
                 {activeDays} <span className="text-sm font-medium text-slate-500">/ 120</span>
@@ -273,10 +273,10 @@ function StudentDashboard() {
 
         <div className="mt-4 flex items-center gap-2 text-xs text-slate-600">
           <span>Less</span>
-          <span className="w-3 h-3 rounded-sm bg-[#DFD9D8]" />
-          <span className="w-3 h-3 rounded-sm bg-[#FC8F8F]" />
-          <span className="w-3 h-3 rounded-sm bg-[#E06D72]" />
-          <span className="w-3 h-3 rounded-sm bg-[#B44446]" />
+          <span className="w-3 h-3 rounded-sm bg-[#F3E6E9]" />
+          <span className="w-3 h-3 rounded-sm bg-[#E3B5BE]" />
+          <span className="w-3 h-3 rounded-sm bg-[#C98390]" />
+          <span className="w-3 h-3 rounded-sm bg-[#9C4556]" />
           <span className="w-3 h-3 rounded-sm bg-[#64242F]" />
           <span>More</span>
         </div>
@@ -298,8 +298,8 @@ function StudentDashboard() {
             </thead>
             <tbody>
               {paginatedRecentAccess.length > 0 ? (
-                paginatedRecentAccess.map((log) => (
-                  <tr key={log._id} className="border-t">
+                paginatedRecentAccess.map((log, index) => (
+                  <tr key={log._id} className={`border-t ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                     <td className="p-3">{log.file?.fileName || "-"}</td>
                     <td className="p-3">{log.action}</td>
                     <td className="p-3">{log.file?.subject || "-"}</td>
@@ -308,8 +308,11 @@ function StudentDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td className="p-3 text-slate-500" colSpan={4}>
-                    No access records yet
+                  <td className="p-6 text-center text-slate-500" colSpan={4}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Inbox size={18} />
+                      <p>No access records yet. Start browsing files to populate this table.</p>
+                    </div>
                   </td>
                 </tr>
               )}

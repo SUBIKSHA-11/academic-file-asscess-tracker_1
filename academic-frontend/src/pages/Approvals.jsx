@@ -53,9 +53,9 @@ function Approvals() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl bg-[#2E2D1D] text-[#F1F2ED] p-6 shadow-md">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold">Approval Queue</h2>
-        <p className="text-[#DFD9D8] mt-1">Review and publish faculty uploads for students.</p>
+        <p className="mt-1 text-slate-600">Review and publish faculty uploads for students.</p>
       </div>
 
       {message && (
@@ -66,7 +66,7 @@ function Approvals() {
 
       <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
+          <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">File</th>
               <th className="p-3 text-left">Category</th>
@@ -79,8 +79,8 @@ function Approvals() {
           </thead>
           <tbody>
             {paginatedPendingFiles.length > 0 ? (
-              paginatedPendingFiles.map((file) => (
-                <tr key={file._id} className="border-b hover:bg-gray-50">
+              paginatedPendingFiles.map((file, index) => (
+                <tr key={file._id} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-slate-50`}>
                   <td className="p-3">{file.fileName}</td>
                   <td className="p-3">{file.category}</td>
                   <td className="p-3">{file.department}</td>
@@ -109,8 +109,8 @@ function Approvals() {
               ))
             ) : (
               <tr>
-                <td className="p-4 text-center text-slate-500" colSpan={7}>
-                  No pending approvals.
+                <td className="p-6 text-center text-slate-500" colSpan={7}>
+                  No pending approvals. New uploads will appear here.
                 </td>
               </tr>
             )}

@@ -118,22 +118,22 @@ const handleView = async (id) => {
         </div>
       )}
 
-      <div className="flex justify-between mb-6 flex-wrap gap-4">
-        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-md w-64">
+      <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex h-10 w-full items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 md:w-72">
           <Search size={18} className="text-gray-400" />
           <input
             type="text"
             placeholder="Search file..."
-            className="outline-none w-full"
+            className="w-full bg-transparent text-sm outline-none"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-md">
+        <div className="flex h-10 items-center gap-3 rounded-lg border border-slate-300 bg-white px-3">
           <Filter size={18} className="text-gray-400" />
           <select
-            className="outline-none"
+            className="bg-transparent text-sm outline-none"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -151,7 +151,7 @@ const handleView = async (id) => {
       {/* Table */}
       <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
+          <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">File</th>
               <th className="p-3 text-left">Category</th>
@@ -167,8 +167,8 @@ const handleView = async (id) => {
           </thead>
 
           <tbody>
-            {filteredFiles.map((file) => (
-              <tr key={file._id} className="border-b hover:bg-gray-50">
+            {filteredFiles.length > 0 ? filteredFiles.map((file, index) => (
+              <tr key={file._id} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-slate-50`}>
                 <td className="p-3">{file.fileName}</td>
                 <td className="p-3">{file.category}</td>
                 <td className="p-3">{file.department}</td>
@@ -224,7 +224,13 @@ const handleView = async (id) => {
 
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td className="p-6 text-center text-slate-500" colSpan={10}>
+                  No files found. Try another filter or upload a new file.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

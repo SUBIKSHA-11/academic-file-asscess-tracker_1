@@ -18,6 +18,7 @@ function Analytics() {
   const [files, setFiles] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
+  const graphPalette = ["#02052F", "#147A7E", "#AAB391", "#E8AB1F", "#D23800"];
 
   const authConfig = useMemo(() => {
     const token = sessionStorage.getItem("token");
@@ -61,7 +62,7 @@ function Analytics() {
       {
         label: "Uploads",
         data: monthlyData.map((m) => m.count),
-        backgroundColor: "#4F7C82",
+        backgroundColor: monthlyData.map((_, i) => graphPalette[i % graphPalette.length]),
         borderRadius: 8
       }
     ]
@@ -72,7 +73,9 @@ function Analytics() {
     datasets: [
       {
         data: categoryData.map((c) => c.count),
-        backgroundColor: ["#B8E3E9", "#93B1B5", "#4F7C82", "#0B2E33", "#6D9297", "#2E4F55"]
+        backgroundColor: graphPalette,
+        borderColor: "#ffffff",
+        borderWidth: 2
       }
     ]
   };

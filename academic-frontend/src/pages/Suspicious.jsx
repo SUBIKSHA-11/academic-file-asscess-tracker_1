@@ -65,7 +65,7 @@ function Suspicious() {
       case "HIGH":
         return "bg-[#FC8F8F] text-[#64242F]";
       case "MEDIUM":
-        return "bg-[#DFD9D8] text-[#5B6D49]";
+        return "bg-[#DFD9D8] text-[#0C3C01]";
       case "LOW":
         return "bg-[#B8E3E9] text-[#0B2E33]";
       default:
@@ -80,10 +80,10 @@ function Suspicious() {
       </h2>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
 
         {/* Search */}
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-md">
+        <div className="flex h-10 min-w-[260px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-3">
           <Search size={18} />
           <input
             type="text"
@@ -93,7 +93,7 @@ function Suspicious() {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="outline-none"
+            className="w-full bg-transparent text-sm outline-none"
           />
         </div>
 
@@ -104,7 +104,7 @@ function Suspicious() {
             setSeverity(e.target.value);
             setCurrentPage(1);
           }}
-          className="border p-2 rounded"
+          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
         >
           <option value="">All Severity</option>
           <option value="HIGH">HIGH</option>
@@ -120,7 +120,7 @@ function Suspicious() {
             setFromDate(e.target.value);
             setCurrentPage(1);
           }}
-          className="border p-2 rounded"
+          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
         />
 
         <input
@@ -130,7 +130,7 @@ function Suspicious() {
             setToDate(e.target.value);
             setCurrentPage(1);
           }}
-          className="border p-2 rounded"
+          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
         />
 
       </div>
@@ -138,7 +138,7 @@ function Suspicious() {
       {/* Table */}
       <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
+          <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">User</th>
               <th className="p-3 text-left">Reason</th>
@@ -150,10 +150,10 @@ function Suspicious() {
           </thead>
 
           <tbody>
-            {paginatedAlerts.map((alert) => (
+            {paginatedAlerts.map((alert, index) => (
               <tr
                 key={alert._id}
-                className="border-b hover:bg-gray-50"
+                className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-slate-50`}
               >
                 <td className="p-3 font-medium">
                   {alert.user?.name}

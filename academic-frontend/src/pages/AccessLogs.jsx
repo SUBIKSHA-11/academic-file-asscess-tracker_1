@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "../api/axios";
 import Pagination from "../components/Pagination";
 
@@ -14,11 +14,7 @@ function AccessLogs() {
 
   const limit = 10;
 
-  useEffect(() => {
-    fetchLogs();
-  }, [action, fromDate, toDate, currentPage]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       const res = await axios.get("/admin/logs", {
         params: {
@@ -36,7 +32,12 @@ function AccessLogs() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [action, fromDate, toDate, currentPage]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLogs();
+  }, [fetchLogs]);
 
   return (
     <div>
@@ -46,7 +47,7 @@ function AccessLogs() {
       </h2>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6 flex-wrap">
+      <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
 
         <select
           value={action}
@@ -54,7 +55,7 @@ function AccessLogs() {
             setCurrentPage(1);
             setAction(e.target.value);
           }}
-          className="border p-2 rounded"
+          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
         >
           <option value="ALL">All Actions</option>
           <option value="UPLOAD">UPLOAD</option>
@@ -63,7 +64,7 @@ function AccessLogs() {
           <option value="DELETE">DELETE</option>
         </select>
 
-        <div className="flex flex-col">
+        <div className="flex min-w-[170px] flex-col">
   <label className="text-sm mb-1">From Date</label>
   <input
     type="date"
@@ -72,11 +73,11 @@ function AccessLogs() {
       setCurrentPage(1);
       setFromDate(e.target.value);
     }}
-    className="border p-2 rounded"
+    className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
   />
 </div>
 
-<div className="flex flex-col">
+<div className="flex min-w-[170px] flex-col">
   <label className="text-sm mb-1">To Date</label>
   <input
     type="date"
@@ -85,7 +86,7 @@ function AccessLogs() {
       setCurrentPage(1);
       setToDate(e.target.value);
     }}
-    className="border p-2 rounded"
+    className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
   />
 </div>
 
@@ -95,7 +96,7 @@ function AccessLogs() {
       {/* Table */}
       <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
+          <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">User</th>
               <th className="p-3 text-left">Role</th>
@@ -106,8 +107,8 @@ function AccessLogs() {
           </thead>
 
           <tbody>
-            {logs.map((log) => (
-              <tr key={log._id} className="border-b hover:bg-gray-50">
+            {logs.length > 0 ? logs.map((log, index) => (
+              <tr key={log._id} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-slate-50`}>
                 <td className="p-3">{log.user?.name}</td>
                 <td className="p-3">{log.user?.role}</td>
                 <td className="p-3 font-semibold">
@@ -118,7 +119,13 @@ function AccessLogs() {
                   {new Date(log.createdAt).toLocaleString()}
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td className="p-6 text-center text-slate-500" colSpan={5}>
+                  No logs found. Adjust filters or check back later.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

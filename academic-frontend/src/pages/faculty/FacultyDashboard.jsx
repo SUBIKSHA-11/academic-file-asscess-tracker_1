@@ -6,7 +6,8 @@ import {
   Globe,
   Shield,
   PieChart as PieChartIcon,
-  BarChart3
+  BarChart3,
+  Inbox
 } from "lucide-react";
 import { Pie, Bar } from "react-chartjs-2";
 import {
@@ -38,6 +39,7 @@ function FacultyDashboard() {
   const [recentPage, setRecentPage] = useState(1);
   const [topRatedPage, setTopRatedPage] = useState(1);
   const rowsPerPage = 6;
+  const graphPalette = ["#02052F", "#147A7E", "#AAB391", "#E8AB1F", "#D23800"];
 
   const authConfig = useMemo(() => {
     const token = sessionStorage.getItem("token");
@@ -94,7 +96,7 @@ function FacultyDashboard() {
     datasets: [
       {
         data: categoryData.map((c) => c.count),
-        backgroundColor: ["#B8E3E9", "#93B1B5", "#4F7C82", "#0B2E33", "#6D9297", "#2E4F55"],
+        backgroundColor: graphPalette,
         borderColor: "#ffffff",
         borderWidth: 2
       }
@@ -107,7 +109,7 @@ function FacultyDashboard() {
       {
         label: "Uploads",
         data: monthlyData.map((m) => m.count),
-        backgroundColor: "#4F7C82",
+        backgroundColor: monthlyData.map((_, i) => graphPalette[i % graphPalette.length]),
         borderRadius: 8
       }
     ]
@@ -149,20 +151,20 @@ function FacultyDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-[#0B2E33] text-[#B8E3E9] shadow-md p-6">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold">Welcome back, {facultyName} 👋</h2>
-        <p className="mt-1 text-[#93B1B5]">Here is your teaching content overview.</p>
+        <p className="mt-1 text-slate-600">Here is your teaching content overview.</p>
       </section>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="rounded-xl bg-[#4F7C82] text-white p-5 shadow-md transition-all duration-300 hover:-translate-y-1 hover:bg-[#0B2E33] hover:shadow-xl"
+            className="theme-card theme-card--faculty min-h-[170px]"
           >
-            <div>{card.icon}</div>
-            <p className="text-sm mt-3 text-[#B8E3E9]">{card.label}</p>
-            <p className="text-3xl font-bold mt-1">{card.value}</p>
+            <div className="text-[#0B2E33]">{card.icon}</div>
+            <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-[#0B2E33]/80">{card.label}</p>
+            <p className="mt-2 text-4xl font-black leading-none text-[#0B2E33]">{card.value}</p>
           </div>
         ))}
       </section>
@@ -223,8 +225,8 @@ function FacultyDashboard() {
             </thead>
             <tbody>
               {paginatedRecentUploads.length > 0 ? (
-                paginatedRecentUploads.map((file) => (
-                  <tr key={file._id} className="border-t border-slate-100">
+                paginatedRecentUploads.map((file, index) => (
+                  <tr key={file._id} className={`border-t border-slate-100 ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                     <td className="p-3">{file.fileName}</td>
                     <td className="p-3">{file.category}</td>
                     <td className="p-3">{file.sensitivity}</td>
@@ -234,8 +236,11 @@ function FacultyDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td className="p-3 text-slate-500" colSpan={5}>
-                    No uploads found.
+                  <td className="p-6 text-center text-slate-500" colSpan={5}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Inbox size={18} />
+                      <p>No uploads found. Upload your first file to get started.</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -264,8 +269,8 @@ function FacultyDashboard() {
             </thead>
             <tbody>
               {paginatedTopRatedFiles.length > 0 ? (
-                paginatedTopRatedFiles.map((item) => (
-                  <tr key={item._id} className="border-t border-slate-100">
+                paginatedTopRatedFiles.map((item, index) => (
+                  <tr key={item._id} className={`border-t border-slate-100 ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                     <td className="p-3">{item.fileName}</td>
                     <td className="p-3">{Number(item.avgRating || 0).toFixed(1)}</td>
                     <td className="p-3">{item.totalFeedbackCount || 0}</td>
@@ -287,8 +292,11 @@ function FacultyDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td className="p-3 text-slate-500" colSpan={5}>
-                    No rating data available yet.
+                  <td className="p-6 text-center text-slate-500" colSpan={5}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Inbox size={18} />
+                      <p>No rating data available yet. Share files to collect feedback.</p>
+                    </div>
                   </td>
                 </tr>
               )}

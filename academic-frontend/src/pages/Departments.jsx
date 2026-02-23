@@ -54,19 +54,19 @@ const toggleDepartment = async (id) => {
       {/* Add Department */}
       <form
         onSubmit={addDepartment}
-        className="flex gap-4 mb-8"
+        className="mb-8 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4"
       >
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Department Name"
           required
-          className="border p-2 rounded w-64"
+          className="h-10 w-64 rounded-lg border border-slate-300 px-3 text-sm"
         />
 
         <button
           type="submit"
-          className="bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded hover:bg-[#5B6D49] transition-colors"
+          className="bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded hover:bg-[#0C3C01] transition-colors"
         >
           <Plus size={16} />
         </button>
@@ -75,7 +75,7 @@ const toggleDepartment = async (id) => {
       {/* Table */}
       <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
+          <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">Department</th>
               <th className="p-3 text-left">Faculty</th>
@@ -87,8 +87,8 @@ const toggleDepartment = async (id) => {
           </thead>
 
           <tbody>
-            {paginatedDepartments.map((dept) => (
-              <tr key={dept.name} className="border-b">
+            {paginatedDepartments.map((dept, index) => (
+              <tr key={dept.name} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                 <td className="p-3">{dept.name}</td>
                 <td className="p-3">{dept.facultyCount}</td>
                 <td className="p-3">{dept.studentCount}</td>
@@ -103,7 +103,7 @@ const toggleDepartment = async (id) => {
       className={`px-4 py-1 rounded-lg text-white text-sm transition ${
         dept.isActive
           ? "bg-[#B44446] hover:bg-[#64242F]"
-          : "bg-[#5B6D49] hover:bg-[#0C3C01]"
+          : "bg-[#0C3C01] hover:bg-[#0C3C01]"
       }`}
     >
       {dept.isActive ? "Disable" : "Activate"}
@@ -115,8 +115,8 @@ const toggleDepartment = async (id) => {
             ))}
             {departments.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-4 text-center text-slate-500">
-                  No departments found.
+                <td colSpan={6} className="p-6 text-center text-slate-500">
+                  No departments found. Add your first department to get started.
                 </td>
               </tr>
             )}

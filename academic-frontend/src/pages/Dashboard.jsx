@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "../api/axios";
-import { PieChart, Users, FileText, Download, Building } from "lucide-react";
+import { PieChart, Users, FileText, Download, Building, Inbox } from "lucide-react";
 import { Bar, Pie, Doughnut } from "react-chartjs-2";
 import Pagination from "../components/Pagination";
 import {
@@ -33,6 +33,7 @@ function Dashboard() {
   const [mostRatedPage, setMostRatedPage] = useState(1);
   const [facultyRatedPage, setFacultyRatedPage] = useState(1);
   const rowsPerPage = 6;
+  const graphPalette = ["#0C3C01", "#8B6B4A", "#A2835E", "#5B6D49", "#7A8A5A", "#C2A27A", "#D7C2A3"];
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -89,7 +90,9 @@ function Dashboard() {
     datasets: [
       {
         data: categoryData.map((c) => c.count),
-        backgroundColor: ["#0C3C01", "#5B6D49", "#A2AC82", "#2E2D1D", "#7D8765"]
+        backgroundColor: graphPalette,
+        borderColor: "#ffffff",
+        borderWidth: 2
       }
     ]
   };
@@ -100,7 +103,8 @@ function Dashboard() {
       {
         label: "Downloads",
         data: topFiles.map((f) => f.downloadCount || 0),
-        backgroundColor: "#5B6D49"
+        backgroundColor: topFiles.map((_, i) => graphPalette[i % graphPalette.length]),
+        borderRadius: 10
       }
     ]
   };
@@ -111,7 +115,8 @@ function Dashboard() {
       {
         label: "Uploads",
         data: monthlyData.map((m) => m.count),
-        backgroundColor: "#5B6D49"
+        backgroundColor: monthlyData.map((_, i) => graphPalette[(i + 2) % graphPalette.length]),
+        borderRadius: 10
       }
     ]
   };
@@ -146,8 +151,8 @@ function Dashboard() {
           onClick={() => setActiveTab("overview")}
           className={`rounded-lg px-4 py-2 text-sm ${
             activeTab === "overview"
-              ? "bg-[#2E2D1D] text-[#F1F2ED]"
-              : "bg-white border border-[#DFD9D8] text-[#2E2D1D]"
+              ? "bg-[#0C3C01] text-[#F1F2ED]"
+              : "bg-white border border-[#DFD9D8] text-[#0C3C01]"
           }`}
         >
           Overview
@@ -157,8 +162,8 @@ function Dashboard() {
           onClick={() => setActiveTab("analytics")}
           className={`rounded-lg px-4 py-2 text-sm ${
             activeTab === "analytics"
-              ? "bg-[#2E2D1D] text-[#F1F2ED]"
-              : "bg-white border border-[#DFD9D8] text-[#2E2D1D]"
+              ? "bg-[#0C3C01] text-[#F1F2ED]"
+              : "bg-white border border-[#DFD9D8] text-[#0C3C01]"
           }`}
         >
           File Rating Analytics
@@ -169,7 +174,7 @@ function Dashboard() {
         <>
           <div className="mb-8">
             <h2 className="text-2xl font-semibold">Welcome back, {adminName || "Admin"}</h2>
-            <p className="text-[#5B6D49] mt-1">Here&apos;s what&apos;s happening in your system today.</p>
+            <p className="text-[#0C3C01] mt-1">Here&apos;s what&apos;s happening in your system today.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
@@ -215,7 +220,9 @@ function Dashboard() {
                       datasets: [
                         {
                           data: departmentData.map((d) => d.count),
-                          backgroundColor: ["#0C3C01", "#5B6D49", "#A2AC82", "#2E2D1D", "#7D8765"]
+                          backgroundColor: graphPalette,
+                          borderColor: "#ffffff",
+                          borderWidth: 2
                         }
                       ]
                     }}
@@ -247,7 +254,7 @@ function Dashboard() {
               <h3 className="mb-4 font-semibold">Recent Activity</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-[#2E2D1D] text-[#F1F2ED] sticky top-0">
+                  <thead className="bg-[#0C3C01] text-[#F1F2ED] sticky top-0">
                     <tr>
                       <th className="p-2 text-left">User</th>
                       <th className="p-2 text-left">Action</th>
@@ -256,8 +263,8 @@ function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedActivity.map((log) => (
-                      <tr key={log._id} className="border-b">
+                    {paginatedActivity.map((log, index) => (
+                      <tr key={log._id} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                         <td className="p-2">{log.user?.name}</td>
                         <td className="p-2">{log.action}</td>
                         <td className="p-2">{log.file?.fileName}</td>
@@ -266,8 +273,11 @@ function Dashboard() {
                     ))}
                     {recentActivity.length === 0 && (
                       <tr>
-                        <td className="p-3 text-slate-500" colSpan={4}>
-                          No recent activity found.
+                        <td className="p-6 text-center text-slate-500" colSpan={4}>
+                          <div className="flex flex-col items-center gap-2">
+                            <Inbox size={18} />
+                            <p>No recent activity found.</p>
+                          </div>
                         </td>
                       </tr>
                     )}
@@ -284,7 +294,7 @@ function Dashboard() {
             <h3 className="mb-4 font-semibold">Most Rated Files (Top 10)</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[#2E2D1D] text-[#F1F2ED] sticky top-0">
+                <thead className="bg-[#0C3C01] text-[#F1F2ED] sticky top-0">
                   <tr>
                     <th className="p-3 text-left">File</th>
                     <th className="p-3 text-left">Department</th>
@@ -295,8 +305,8 @@ function Dashboard() {
                 </thead>
                 <tbody>
                   {paginatedMostRated.length > 0 ? (
-                    paginatedMostRated.map((item) => (
-                      <tr key={item._id} className="border-b">
+                    paginatedMostRated.map((item, index) => (
+                      <tr key={item._id} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                         <td className="p-3">{item.fileName}</td>
                         <td className="p-3">{item.department || "-"}</td>
                         <td className="p-3">{Number(item.avgRating || 0).toFixed(1)}</td>
@@ -306,7 +316,12 @@ function Dashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="p-3 text-slate-500">No feedback data available.</td>
+                      <td colSpan={5} className="p-6 text-center text-slate-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <Inbox size={18} />
+                          <p>No feedback data available.</p>
+                        </div>
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -323,7 +338,7 @@ function Dashboard() {
             <h3 className="mb-4 font-semibold">Best Rated Faculty</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[#2E2D1D] text-[#F1F2ED] sticky top-0">
+                <thead className="bg-[#0C3C01] text-[#F1F2ED] sticky top-0">
                   <tr>
                     <th className="p-3 text-left">Faculty</th>
                     <th className="p-3 text-left">Files Uploaded</th>
@@ -333,8 +348,8 @@ function Dashboard() {
                 </thead>
                 <tbody>
                   {paginatedFacultyRated.length > 0 ? (
-                    paginatedFacultyRated.map((item) => (
-                      <tr key={item.facultyId} className="border-b">
+                    paginatedFacultyRated.map((item, index) => (
+                      <tr key={item.facultyId} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                         <td className="p-3">{item.facultyName}</td>
                         <td className="p-3">{item.filesUploaded || 0}</td>
                         <td className="p-3">{Number(item.avgRating || 0).toFixed(1)}</td>
@@ -343,7 +358,12 @@ function Dashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="p-3 text-slate-500">No faculty rating data available.</td>
+                      <td colSpan={4} className="p-6 text-center text-slate-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <Inbox size={18} />
+                          <p>No faculty rating data available.</p>
+                        </div>
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -363,10 +383,10 @@ function Dashboard() {
 
 function StatCard({ icon, label, value }) {
   return (
-    <div className="bg-[#5B6D49] text-[#F1F2ED] p-6 rounded-xl shadow-md border border-[#A2AC82]">
-      <div className="flex justify-between items-center mb-3">{icon}</div>
-      <h4 className="text-sm opacity-90">{label}</h4>
-      <p className="text-2xl font-bold mt-2">{value || 0}</p>
+    <div className="theme-card theme-card--admin min-h-[170px]">
+      <div className="mb-4 flex items-center justify-between text-[#0C3C01]">{icon}</div>
+      <h4 className="text-sm font-semibold uppercase tracking-wide text-[#1d4f12]/80">{label}</h4>
+      <p className="mt-2 text-4xl font-black leading-none text-[#0C3C01]">{value || 0}</p>
     </div>
   );
 }

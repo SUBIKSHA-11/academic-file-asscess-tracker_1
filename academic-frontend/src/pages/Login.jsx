@@ -77,28 +77,30 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#ECECEC] px-4 py-10">
-      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-[#D7D7D7] bg-white shadow-xl lg:grid-cols-2">
-        <div className="bg-[#64242F] p-10 text-[#F7EDEE]">
-          <p className="mb-3 inline-block rounded-full border border-[#A86571] px-3 py-1 text-xs">
-            Unified Academic Portal
+    <div className="min-h-screen bg-gradient-to-br from-[#DDF3F2] via-[#EAF8F6] to-[#DCEBFF] px-4 py-10">
+      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-[#C6E0DD] bg-white/95 shadow-2xl lg:grid-cols-2">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#0B2E33] via-[#1E5A63] to-[#4F7C82] p-10 text-[#E8FAFA]">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#7CC0BC]/30" />
+          <div className="pointer-events-none absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-[#B8E3E9]/25" />
+          <p className="mb-3 inline-block rounded-full border border-[#9DD1CC] bg-[#0B2E33]/30 px-3 py-1 text-xs">
+            College Academic Portal
           </p>
-          <h1 className="text-3xl font-bold leading-tight">Academic File Access Tracker</h1>
-          <p className="mt-4 text-sm text-[#F0C8CE]">
+          <h1 className="text-3xl font-bold leading-tight">Your College Name - Academic File Access Portal</h1>
+          <p className="mt-4 text-sm text-[#CBE8E5]">
             A common platform for students, faculty, and administrators to securely
             access, manage, and monitor academic files.
           </p>
-          <div className="mt-8 space-y-2 text-sm text-[#F4D9DE]">
+          <div className="mt-8 space-y-2 text-sm text-[#DDF3F2]">
             <p>- Common sign-in and role-based dashboards</p>
             <p>- Secure view/download with audit history</p>
             <p>- Centralized departmental file repository</p>
           </div>
         </div>
 
-        <div className="p-8 md:p-10">
-          <h2 className="text-2xl font-bold text-[#1E1E1E]">Welcome Back</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Sign in to continue to your common academic workspace.
+        <div className="bg-gradient-to-b from-[#F6FCFC] to-white p-8 md:p-10">
+          <h2 className="text-2xl font-bold text-[#113A41]">Welcome Back</h2>
+          <p className="mt-1 text-sm text-[#4E6F73]">
+            Sign in using your registered college mail ID to continue.
           </p>
 
           {error && <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
@@ -110,10 +112,10 @@ function Login() {
                 type="email"
                 name="email"
                 value={form.email}
-                placeholder="Email address"
+                placeholder="Registered college mail ID"
                 required
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-[#64242F]"
+                className="w-full rounded-lg border border-[#BFDCD9] px-3 py-2 outline-none focus:border-[#1E5A63]"
               />
 
               <input
@@ -123,13 +125,13 @@ function Login() {
                 placeholder="Password"
                 required
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-[#64242F]"
+                className="w-full rounded-lg border border-[#BFDCD9] px-3 py-2 outline-none focus:border-[#1E5A63]"
               />
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-[#64242F] py-2 text-white transition hover:bg-[#4F1D25] disabled:opacity-60"
+                className="w-full rounded-lg bg-gradient-to-r from-[#0B2E33] to-[#2A7A7F] py-2 text-white transition hover:from-[#082126] hover:to-[#1E5A63] disabled:opacity-60"
               >
                 {loading ? "Signing in..." : "Login"}
               </button>
@@ -137,24 +139,24 @@ function Login() {
               <button
                 type="button"
                 onClick={() => setShowForgot(true)}
-                className="w-full text-sm text-[#64242F] underline underline-offset-2"
+                className="w-full text-sm text-[#1E5A63] underline underline-offset-2"
               >
                 Forgot password?
               </button>
             </form>
           ) : (
             <form onSubmit={handleForgotPassword} className="mt-6 space-y-4">
-              <p className="rounded-lg bg-[#F8F1F2] p-3 text-xs text-[#64242F]">
-                Reset password directly using your registered email.
+              <p className="rounded-lg bg-[#EAF8F6] p-3 text-xs text-[#1E5A63]">
+                Reset password using your registered college mail ID.
               </p>
               <input
                 type="email"
                 name="email"
                 value={forgotForm.email}
-                placeholder="Registered email"
+                placeholder="Registered college mail ID"
                 required
                 onChange={handleForgotChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-[#64242F]"
+                className="w-full rounded-lg border border-[#BFDCD9] px-3 py-2 outline-none focus:border-[#1E5A63]"
               />
               <input
                 type="password"
@@ -163,7 +165,7 @@ function Login() {
                 placeholder="New password"
                 required
                 onChange={handleForgotChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-[#64242F]"
+                className="w-full rounded-lg border border-[#BFDCD9] px-3 py-2 outline-none focus:border-[#1E5A63]"
               />
               <input
                 type="password"
@@ -172,13 +174,13 @@ function Login() {
                 placeholder="Confirm new password"
                 required
                 onChange={handleForgotChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-[#64242F]"
+                className="w-full rounded-lg border border-[#BFDCD9] px-3 py-2 outline-none focus:border-[#1E5A63]"
               />
 
               <button
                 type="submit"
                 disabled={forgotLoading}
-                className="w-full rounded-lg bg-[#64242F] py-2 text-white transition hover:bg-[#4F1D25] disabled:opacity-60"
+                className="w-full rounded-lg bg-gradient-to-r from-[#0B2E33] to-[#2A7A7F] py-2 text-white transition hover:from-[#082126] hover:to-[#1E5A63] disabled:opacity-60"
               >
                 {forgotLoading ? "Resetting..." : "Reset Password"}
               </button>

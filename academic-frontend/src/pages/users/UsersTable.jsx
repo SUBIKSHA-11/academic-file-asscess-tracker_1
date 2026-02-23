@@ -78,7 +78,7 @@ const [departments, setDepartments] = useState([]);
 
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded-lg hover:bg-[#5B6D49] transition-colors"
+          className="flex items-center gap-2 rounded-lg bg-[#0C3C01] px-4 py-2 text-[#F1F2ED] transition-colors hover:bg-[#163914]"
         >
           <Plus size={18} />
           Add {role}
@@ -96,7 +96,7 @@ const [departments, setDepartments] = useState([]);
             placeholder="Name"
             onChange={handleChange}
             required
-            className="border p-2 rounded"
+            className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
           />
 
           <input
@@ -104,7 +104,7 @@ const [departments, setDepartments] = useState([]);
             placeholder="Email"
             onChange={handleChange}
             required
-            className="border p-2 rounded"
+            className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
           />
 
           <input
@@ -112,14 +112,14 @@ const [departments, setDepartments] = useState([]);
             placeholder="Password"
             onChange={handleChange}
             required
-            className="border p-2 rounded"
+            className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
           />
   <select
     name="department"
     value={form.department}
     onChange={handleChange}
     required
-    className="border p-2 rounded"
+    className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
   >
     <option value="">Select Department</option>
 
@@ -137,7 +137,7 @@ const [departments, setDepartments] = useState([]);
               placeholder="Faculty ID"
               onChange={handleChange}
               required
-              className="border p-2 rounded"
+              className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
             />
           )}
 
@@ -148,14 +148,14 @@ const [departments, setDepartments] = useState([]);
                 placeholder="Student ID"
                 onChange={handleChange}
                 required
-                className="border p-2 rounded"
+                className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
               />
 
               <select
                 name="year"
                 onChange={handleChange}
                 required
-                className="border p-2 rounded"
+                className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
               >
                 <option value="">Select Year</option>
                 <option value="1">1</option>
@@ -168,7 +168,7 @@ const [departments, setDepartments] = useState([]);
 
           <button
             type="submit"
-            className="col-span-full bg-[#5B6D49] text-[#F1F2ED] py-2 rounded-lg hover:bg-[#0C3C01] transition-colors"
+            className="col-span-full rounded-lg bg-[#0C3C01] py-2 text-[#F1F2ED] transition-colors hover:bg-[#163914]"
           >
             Create {role}
           </button>
@@ -178,7 +178,7 @@ const [departments, setDepartments] = useState([]);
       {/* TABLE */}
       <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-[#2E2D1D] text-[#F1F2ED]">
+          <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Email</th>
@@ -201,8 +201,8 @@ const [departments, setDepartments] = useState([]);
           </thead>
 
           <tbody>
-            {paginatedUsers.map((user) => (
-              <tr key={user._id} className="border-b hover:bg-gray-50">
+            {paginatedUsers.map((user, index) => (
+              <tr key={user._id} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-slate-50`}>
                 <td className="p-3">{user.name}</td>
                 <td className="p-3">{user.email}</td>
 
@@ -234,8 +234,8 @@ const [departments, setDepartments] = useState([]);
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={emptyColSpan} className="p-4 text-center text-slate-500">
-                  No users found.
+                <td colSpan={emptyColSpan} className="p-6 text-center text-slate-500">
+                  No users found. Add a user to populate this list.
                 </td>
               </tr>
             )}

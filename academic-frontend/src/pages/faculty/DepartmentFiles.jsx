@@ -86,13 +86,13 @@ function DepartmentFiles() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl bg-[#0B2E33] text-[#B8E3E9] shadow-md p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold">Department Files</h2>
-        <p className="text-[#93B1B5] mt-1">View files from all departments based on access policy.</p>
+        <p className="mt-1 text-slate-600">View files from all departments based on access policy.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 w-full md:max-w-sm">
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex h-10 w-full items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 md:max-w-sm">
           <Search size={18} className="text-slate-400" />
           <input
             type="text"
@@ -113,7 +113,7 @@ function DepartmentFiles() {
               setDepartment(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"
+            className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
           >
             <option value="">All Departments</option>
             {departments.map((dept) => (
@@ -129,7 +129,7 @@ function DepartmentFiles() {
               setCategory(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"
+            className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
           >
             <option value="">All Categories</option>
             <option value="NOTES">NOTES</option>
@@ -144,7 +144,7 @@ function DepartmentFiles() {
 
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
         <table className="w-full text-sm min-w-[980px]">
-          <thead className="bg-slate-50">
+          <thead className="sticky top-0 bg-slate-50">
             <tr>
               <th className="p-3 text-left">File Name</th>
               <th className="p-3 text-left">Subject</th>
@@ -160,8 +160,8 @@ function DepartmentFiles() {
           </thead>
           <tbody>
             {paginatedFiles.length > 0 ? (
-              paginatedFiles.map((file) => (
-                <tr key={file._id} className="border-t border-slate-100">
+              paginatedFiles.map((file, index) => (
+                <tr key={file._id} className={`border-t border-slate-100 ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
                   <td className="p-3">{file.fileName}</td>
                   <td className="p-3">{file.subject}</td>
                   <td className="p-3">{file.semester}</td>
@@ -192,8 +192,8 @@ function DepartmentFiles() {
               ))
             ) : (
               <tr>
-                <td colSpan={10} className="p-4 text-center text-slate-500">
-                  No files found.
+                <td colSpan={10} className="p-6 text-center text-slate-500">
+                  No files found. Try changing department or category.
                 </td>
               </tr>
             )}
