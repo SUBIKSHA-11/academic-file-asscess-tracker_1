@@ -13,5 +13,6 @@ router.get("/all-files", facultyController.getAllFiles);
 router.get("/category-distribution", facultyController.getCategoryDistribution);
 router.get("/monthly-uploads", facultyController.getMonthlyUploads);
 router.get("/recent-uploads", facultyController.getRecentUploads);
+router.get("/top-rated", facultyController.getTopRatedFiles);
 
 module.exports = router;

@@ -36,21 +36,21 @@ router.get(
 router.get(
   "/pending",
   authMiddleware,
-  roleMiddleware(["ADMIN", "FACULTY"]),
+  roleMiddleware(["ADMIN"]),
   fileController.getPendingFiles
 );
 // Approve file
 router.patch(
   "/:id/approve",
   authMiddleware,
-  roleMiddleware(["ADMIN", "FACULTY"]),
+  roleMiddleware(["ADMIN"]),
   fileController.approveFile
 );
 // Reject file
 router.patch(
   "/:id/reject",
   authMiddleware,
-  roleMiddleware(["ADMIN", "FACULTY"]),
+  roleMiddleware(["ADMIN"]),
   fileController.rejectFile
 );
 // Version history

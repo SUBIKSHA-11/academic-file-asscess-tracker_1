@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
 import { Download, Eye, Fingerprint, Activity } from "lucide-react";
+import Pagination from "../../components/Pagination";
 
 const getIntensityClass = (count) => {
   if (count === 0) return "bg-[#DFD9D8]";
@@ -19,10 +20,16 @@ function StudentDashboard() {
     totalAccessActions: 0,
     uniqueFilesAccessed: 0,
     downloadsThisWeek: 0,
-    mostDownloadedCategory: "N/A"
+    mostDownloadedCategory: "N/A",
+    currentStreak: 0,
+    longestStreak: 0,
+    badges: []
   });
   const [gridData, setGridData] = useState([]);
   const [recentAccess, setRecentAccess] = useState([]);
+  const [newBadge, setNewBadge] = useState(null);
+  const [recentPage, setRecentPage] = useState(1);
+  const rowsPerPage = 8;
 
   const authConfig = useMemo(() => {
     const token = sessionStorage.getItem("token");
@@ -51,7 +58,10 @@ function StudentDashboard() {
           totalAccessActions: statsRes.data?.totalAccessActions || 0,
           uniqueFilesAccessed: statsRes.data?.uniqueFilesAccessed || 0,
           downloadsThisWeek: statsRes.data?.downloadsThisWeek || 0,
-          mostDownloadedCategory: statsRes.data?.mostDownloadedCategory || "N/A"
+          mostDownloadedCategory: statsRes.data?.mostDownloadedCategory || "N/A",
+          currentStreak: statsRes.data?.currentStreak || 0,
+          longestStreak: statsRes.data?.longestStreak || 0,
+          badges: statsRes.data?.badges || []
         });
         setGridData(gridRes.data || []);
         setRecentAccess(accessRes.data || []);
@@ -64,6 +74,20 @@ function StudentDashboard() {
 
     loadDashboard();
   }, [authConfig]);
+
+  useEffect(() => {
+    if (!stats.badges?.length) return;
+    const seenBadges = JSON.parse(sessionStorage.getItem("seenBadges") || "[]");
+    const latest = [...stats.badges].sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt))[0];
+    if (!latest?.name) return;
+    if (!seenBadges.includes(latest.name)) {
+      setNewBadge(latest);
+      sessionStorage.setItem("seenBadges", JSON.stringify([...seenBadges, latest.name]));
+      const timer = setTimeout(() => setNewBadge(null), 3500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [stats.badges]);
 
   const cards = [
     { label: "My Downloads", value: stats.totalDownloads, icon: <Download size={18} /> },
@@ -113,6 +137,16 @@ function StudentDashboard() {
       .join(" ");
   }, [stats.mostDownloadedCategory]);
 
+  const paginatedRecentAccess = useMemo(() => {
+    const recentTotalPages = Math.max(1, Math.ceil(recentAccess.length / rowsPerPage));
+    const safeRecentPage = Math.min(recentPage, recentTotalPages);
+    const start = (safeRecentPage - 1) * rowsPerPage;
+    return recentAccess.slice(start, start + rowsPerPage);
+  }, [recentAccess, recentPage]);
+
+  const recentTotalPages = Math.max(1, Math.ceil(recentAccess.length / rowsPerPage));
+  const safeRecentPage = Math.min(recentPage, recentTotalPages);
+
   if (loading) {
     return (
       <div className="space-y-5 animate-pulse">
@@ -147,6 +181,38 @@ function StudentDashboard() {
             <p className="text-3xl font-bold mt-1">{card.value}</p>
           </div>
         ))}
+      </section>
+
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-xl bg-white border p-5 shadow-sm">
+          <p className="text-xs text-slate-500">Current Streak</p>
+          <p className="mt-1 text-2xl font-bold text-[#64242F]">🔥 {stats.currentStreak} days</p>
+          <p className="text-xs text-slate-500 mt-1">Keep logging in daily to build consistency.</p>
+        </div>
+        <div className="rounded-xl bg-white border p-5 shadow-sm">
+          <p className="text-xs text-slate-500">Longest Streak</p>
+          <p className="mt-1 text-2xl font-bold text-[#64242F]">🏆 {stats.longestStreak} days</p>
+          <p className="text-xs text-slate-500 mt-1">Your best continuous login record.</p>
+        </div>
+      </section>
+
+      <section className="rounded-xl bg-white border p-5 shadow-sm">
+        <h3 className="font-semibold text-slate-800 mb-3">My Badges</h3>
+        {stats.badges?.length ? (
+          <div className="flex flex-wrap gap-2">
+            {stats.badges.map((badge) => (
+              <span
+                key={`${badge.name}_${badge.earnedAt}`}
+                className="rounded-full bg-amber-100 text-amber-800 px-3 py-1 text-xs"
+                title={`Earned on ${new Date(badge.earnedAt).toLocaleDateString()}`}
+              >
+                {badge.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">No badges yet. Keep your streak alive.</p>
+        )}
       </section>
 
       <section className="bg-white rounded-xl border shadow-sm p-5">
@@ -220,7 +286,7 @@ function StudentDashboard() {
         <div className="p-5 border-b">
           <h3 className="font-semibold text-slate-800">My Recent Access Records</h3>
         </div>
-        <div className="max-h-80 overflow-y-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 sticky top-0">
               <tr>
@@ -231,8 +297,8 @@ function StudentDashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentAccess.length > 0 ? (
-                recentAccess.map((log) => (
+              {paginatedRecentAccess.length > 0 ? (
+                paginatedRecentAccess.map((log) => (
                   <tr key={log._id} className="border-t">
                     <td className="p-3">{log.file?.fileName || "-"}</td>
                     <td className="p-3">{log.action}</td>
@@ -250,7 +316,17 @@ function StudentDashboard() {
             </tbody>
           </table>
         </div>
+        <div className="p-5 pt-0">
+          <Pagination currentPage={safeRecentPage} totalPages={recentTotalPages} onPageChange={setRecentPage} />
+        </div>
       </section>
+
+      {newBadge && (
+        <div className="fixed bottom-6 right-6 rounded-xl bg-[#64242F] px-5 py-4 text-[#F7EDEE] shadow-xl animate-bounce">
+          <p className="text-xs uppercase tracking-wide text-[#FC8F8F]">Badge Unlocked</p>
+          <p className="text-sm font-semibold mt-1">🏅 {newBadge.name}</p>
+        </div>
+      )}
     </div>
   );
 }

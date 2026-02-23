@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "../../api/axios";
 import { Trash2, Plus } from "lucide-react";
+import Pagination from "../../components/Pagination";
 
 function UsersTable({ role }) {
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
 const [departments, setDepartments] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
 
   const [form, setForm] = useState({
     name: "",
@@ -17,23 +20,26 @@ const [departments, setDepartments] = useState([]);
     year: ""
   });
 
-  useEffect(() => {
-    fetchUsers();
-    fetchDepartments();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     const res = await axios.get("/admin/users");
     setUsers(res.data.filter((u) => u.role === role));
-  };
-  const fetchDepartments = async () => {
+    setCurrentPage(1);
+  }, [role]);
+
+  const fetchDepartments = useCallback(async () => {
   try {
     const res = await axios.get("/departments");
     setDepartments(res.data.filter(d => d.isActive));
   } catch (err) {
     console.error("Department fetch failed", err);
   }
-};
+}, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchUsers();
+    fetchDepartments();
+  }, [fetchDepartments, fetchUsers]);
 
 
   const deleteUser = async (id) => {
@@ -56,6 +62,12 @@ const [departments, setDepartments] = useState([]);
     setShowForm(false);
     fetchUsers();
   };
+
+  const totalPages = Math.max(1, Math.ceil(users.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const start = (safeCurrentPage - 1) * rowsPerPage;
+  const paginatedUsers = users.slice(start, start + rowsPerPage);
+  const emptyColSpan = role === "STUDENT" ? 7 : role === "FACULTY" ? 6 : 5;
 
   return (
     <div>
@@ -189,7 +201,7 @@ const [departments, setDepartments] = useState([]);
           </thead>
 
           <tbody>
-            {users.map((user) => (
+            {paginatedUsers.map((user) => (
               <tr key={user._id} className="border-b hover:bg-gray-50">
                 <td className="p-3">{user.name}</td>
                 <td className="p-3">{user.email}</td>
@@ -220,9 +232,18 @@ const [departments, setDepartments] = useState([]);
                 </td>
               </tr>
             ))}
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={emptyColSpan} className="p-4 text-center text-slate-500">
+                  No users found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={safeCurrentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 }

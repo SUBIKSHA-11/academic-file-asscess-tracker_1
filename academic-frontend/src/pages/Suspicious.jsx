@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "../api/axios";
-import { AlertTriangle, Search, CheckCircle, Trash2 } from "lucide-react";
+import { AlertTriangle, Search, CheckCircle, RotateCcw, Trash2 } from "lucide-react";
+import Pagination from "../components/Pagination";
 
 function Suspicious() {
   const [alerts, setAlerts] = useState([]);
@@ -8,12 +9,10 @@ function Suspicious() {
   const [severity, setSeverity] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
 
-  useEffect(() => {
-    fetchAlerts();
-  }, [severity, fromDate, toDate]);
-
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     try {
       const res = await axios.get("/admin/alerts", {
         params: {
@@ -27,10 +26,20 @@ function Suspicious() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [severity, fromDate, toDate]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAlerts();
+  }, [fetchAlerts]);
 
   const markReviewed = async (id) => {
     await axios.patch(`/admin/alerts/${id}/review`);
+    fetchAlerts();
+  };
+
+  const markPending = async (id) => {
+    await axios.patch(`/admin/alerts/${id}/reopen`);
     fetchAlerts();
   };
 
@@ -43,6 +52,13 @@ function Suspicious() {
     alert.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
     alert.reason?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.max(1, Math.ceil(filteredAlerts.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedAlerts = useMemo(() => {
+    const start = (safeCurrentPage - 1) * rowsPerPage;
+    return filteredAlerts.slice(start, start + rowsPerPage);
+  }, [filteredAlerts, safeCurrentPage]);
 
   const getSeverityStyle = (severity) => {
     switch (severity) {
@@ -73,7 +89,10 @@ function Suspicious() {
             type="text"
             placeholder="Search user or reason..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="outline-none"
           />
         </div>
@@ -81,7 +100,10 @@ function Suspicious() {
         {/* Severity Filter */}
         <select
           value={severity}
-          onChange={(e) => setSeverity(e.target.value)}
+          onChange={(e) => {
+            setSeverity(e.target.value);
+            setCurrentPage(1);
+          }}
           className="border p-2 rounded"
         >
           <option value="">All Severity</option>
@@ -94,14 +116,20 @@ function Suspicious() {
         <input
           type="date"
           value={fromDate}
-          onChange={(e) => setFromDate(e.target.value)}
+          onChange={(e) => {
+            setFromDate(e.target.value);
+            setCurrentPage(1);
+          }}
           className="border p-2 rounded"
         />
 
         <input
           type="date"
           value={toDate}
-          onChange={(e) => setToDate(e.target.value)}
+          onChange={(e) => {
+            setToDate(e.target.value);
+            setCurrentPage(1);
+          }}
           className="border p-2 rounded"
         />
 
@@ -122,7 +150,7 @@ function Suspicious() {
           </thead>
 
           <tbody>
-            {filteredAlerts.map((alert) => (
+            {paginatedAlerts.map((alert) => (
               <tr
                 key={alert._id}
                 className="border-b hover:bg-gray-50"
@@ -162,13 +190,21 @@ function Suspicious() {
 
                 <td className="p-3 flex justify-center gap-4">
 
-                  {!alert.reviewed && (
+                  {!alert.reviewed ? (
                     <button
                       onClick={() => markReviewed(alert._id)}
                       className="text-green-600 hover:text-green-800"
                       title="Mark as Reviewed"
                     >
                       <CheckCircle size={18} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => markPending(alert._id)}
+                      className="text-amber-600 hover:text-amber-800"
+                      title="Mark as Pending"
+                    >
+                      <RotateCcw size={18} />
                     </button>
                   )}
 
@@ -184,9 +220,18 @@ function Suspicious() {
 
               </tr>
             ))}
+            {filteredAlerts.length === 0 && (
+              <tr>
+                <td className="p-4 text-center text-slate-500" colSpan={6}>
+                  No suspicious activity found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={safeCurrentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 }

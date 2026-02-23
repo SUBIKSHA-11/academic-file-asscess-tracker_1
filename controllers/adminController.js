@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const AcademicFile = require("../models/AcademicFile");
 const Alert = require("../models/Alert");
+const FileFeedback = require("../models/FileFeedback");
 
 // Dashboard Summary
 const getDashboardStats = async (req, res) => {
@@ -381,6 +382,156 @@ const addDepartment = async (req, res) => {
   }
 };
 
+const reopenAlert = async (req, res) => {
+  try {
+    await Alert.findByIdAndUpdate(req.params.id, {
+      reviewed: false
+    });
+
+    res.json({ message: "Marked as pending" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed" });
+  }
+};
+
+const getFileAnalytics = async (req, res) => {
+  try {
+    const feedbackCollection = FileFeedback.collection.name;
+    const userCollection = User.collection.name;
+
+    const mostRatedFiles = await AcademicFile.aggregate([
+      {
+        $lookup: {
+          from: feedbackCollection,
+          localField: "_id",
+          foreignField: "fileId",
+          as: "feedbacks"
+        }
+      },
+      {
+        $addFields: {
+          totalFeedbackCount: { $size: "$feedbacks" },
+          avgRating: {
+            $cond: [
+              { $gt: [{ $size: "$feedbacks" }, 0] },
+              { $round: [{ $avg: "$feedbacks.rating" }, 2] },
+              0
+            ]
+          },
+          helpfulCount: {
+            $size: {
+              $filter: {
+                input: "$feedbacks",
+                as: "fb",
+                cond: { $eq: ["$$fb.isHelpful", true] }
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          helpfulPercentage: {
+            $cond: [
+              { $gt: ["$totalFeedbackCount", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      { $divide: ["$helpfulCount", "$totalFeedbackCount"] },
+                      100
+                    ]
+                  },
+                  2
+                ]
+              },
+              0
+            ]
+          }
+        }
+      },
+      { $sort: { totalFeedbackCount: -1, avgRating: -1, createdAt: -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          fileName: 1,
+          subject: 1,
+          department: 1,
+          totalFeedbackCount: 1,
+          avgRating: 1,
+          helpfulPercentage: 1
+        }
+      }
+    ]);
+
+    const bestRatedFaculty = await AcademicFile.aggregate([
+      {
+        $lookup: {
+          from: feedbackCollection,
+          localField: "_id",
+          foreignField: "fileId",
+          as: "feedbacks"
+        }
+      },
+      {
+        $project: {
+          uploadedBy: 1,
+          fileFeedbackCount: { $size: "$feedbacks" },
+          fileRatingSum: { $sum: "$feedbacks.rating" }
+        }
+      },
+      {
+        $group: {
+          _id: "$uploadedBy",
+          filesUploaded: { $sum: 1 },
+          totalFeedbackReceived: { $sum: "$fileFeedbackCount" },
+          totalRatingPoints: { $sum: "$fileRatingSum" }
+        }
+      },
+      {
+        $addFields: {
+          avgRating: {
+            $cond: [
+              { $gt: ["$totalFeedbackReceived", 0] },
+              { $round: [{ $divide: ["$totalRatingPoints", "$totalFeedbackReceived"] }, 2] },
+              0
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: userCollection,
+          localField: "_id",
+          foreignField: "_id",
+          as: "faculty"
+        }
+      },
+      { $unwind: "$faculty" },
+      { $match: { "faculty.role": "FACULTY" } },
+      { $sort: { avgRating: -1, totalFeedbackReceived: -1, filesUploaded: -1 } },
+      { $limit: 20 },
+      {
+        $project: {
+          facultyId: "$_id",
+          facultyName: "$faculty.name",
+          filesUploaded: 1,
+          avgRating: 1,
+          totalFeedbackReceived: 1
+        }
+      }
+    ]);
+
+    res.json({
+      mostRatedFiles,
+      bestRatedFaculty
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch file analytics" });
+  }
+};
+
 
 
 module.exports = {
@@ -398,11 +549,13 @@ module.exports = {
   getLogs,
   getDownloadsToday,
   markAlertReviewed,
+reopenAlert,
 deleteAlert,
 getLogsGroupedByUser,
 getMostActiveDepartment,
 getDepartments,
-addDepartment
+addDepartment,
+getFileAnalytics
 
 };
 

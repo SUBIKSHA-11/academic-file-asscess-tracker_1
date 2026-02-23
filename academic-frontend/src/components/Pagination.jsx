@@ -6,7 +6,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
       <button
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        className="px-3 py-1 rounded border border-[#DFD9D8] bg-[#F1F2ED] text-[#2E2D1D] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#DFD9D8]"
       >
         Prev
       </button>
@@ -17,8 +17,8 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
           onClick={() => onPageChange(index + 1)}
           className={`px-3 py-1 rounded ${
             currentPage === index + 1
-              ? "bg-gradient-to-r from-orange-500 to-red-600 text-white"
-              : "bg-gray-200"
+              ? "bg-[#201e1e] text-[#F1F2ED]"
+              : "border border-[#DFD9D8] bg-[#F1F2ED] text-[#2E2D1D] hover:bg-[#DFD9D8]"
           }`}
         >
           {index + 1}
@@ -28,7 +28,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
       <button
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+        className="px-3 py-1 rounded border border-[#DFD9D8] bg-[#F1F2ED] text-[#2E2D1D] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#DFD9D8]"
       >
         Next
       </button>

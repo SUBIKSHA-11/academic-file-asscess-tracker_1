@@ -56,9 +56,7 @@ const uploadFile = async (req, res) => {
     }
 
     const uploaderId = req.user.userId;
-    const normalizedSensitivity = String(sensitivity || "PUBLIC").toUpperCase();
-    const shouldAutoApprove =
-      req.user.role === "ADMIN" || normalizedSensitivity === "PUBLIC";
+    const shouldAutoApprove = req.user.role === "ADMIN";
     const status = shouldAutoApprove ? "APPROVED" : "PENDING";
     const now = new Date();
 
@@ -450,15 +448,10 @@ const viewFile = async (req, res) => {
 
 const getPendingFiles = async (req, res) => {
   try {
-    const filter = {
+    const files = await AcademicFile.find({
       ...latestFilter,
       status: "PENDING"
-    };
-    if (req.user.role === "FACULTY") {
-      filter.uploadedBy = req.user.userId;
-    }
-
-    const files = await AcademicFile.find(filter)
+    })
       .populate("uploadedBy", "name email")
       .sort({ createdAt: -1 });
 
@@ -471,6 +464,10 @@ const getPendingFiles = async (req, res) => {
 
 const approveFile = async (req, res) => {
   try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({ message: "Only admin can approve files" });
+    }
+
     const file = await AcademicFile.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
@@ -499,6 +496,10 @@ const approveFile = async (req, res) => {
 
 const rejectFile = async (req, res) => {
   try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({ message: "Only admin can reject files" });
+    }
+
     const file = await AcademicFile.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ message: "File not found" });

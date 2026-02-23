@@ -11,6 +11,7 @@ import AdminList from "./pages/users/AdminList";
 import FacultyList from "./pages/users/FacultyList";
 import StudentList from "./pages/users/StudentList";
 import Departments from "./pages/Departments";
+import Approvals from "./pages/Approvals";
 import FacultyLayout from "./layouts/FacultyLayout";
 import FacultyDashboard from "./pages/faculty/FacultyDashboard";
 import FacultyMyFiles from "./pages/faculty/MyFiles";
@@ -157,6 +158,17 @@ function App() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={["ADMIN"]}>
                 <Layout><StudentList /></Layout>
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/approvals"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["ADMIN"]}>
+                <Layout><Approvals /></Layout>
               </RoleRoute>
             </ProtectedRoute>
           }

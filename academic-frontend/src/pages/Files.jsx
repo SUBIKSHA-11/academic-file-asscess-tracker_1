@@ -21,13 +21,10 @@ function Files() {
   const [category, setCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [message, setMessage] = useState("");
   const limit = 5;
 
-  useEffect(() => {
-    fetchFiles(currentPage);
-  }, [currentPage]);
-
-  const fetchFiles = async (page = 1) => {
+  async function fetchFiles(page = 1) {
     try {
       const res = await axios.get(`/files?page=${page}&limit=${limit}`);
       setFiles(res.data.files || []);
@@ -36,10 +33,16 @@ function Files() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchFiles(currentPage);
+  }, [currentPage]);
 
   const handleDelete = async (id) => {
     try {
+      setMessage("");
       await axios.delete(`/files/${id}`);
       fetchFiles(currentPage);
     } catch (err) {
@@ -109,6 +112,12 @@ const handleView = async (id) => {
       )}
 
       {/* Filters */}
+      {message && (
+        <div className="mb-4 rounded-lg border border-[#DFD9D8] bg-[#F8F4F4] px-4 py-3 text-sm text-[#64242F]">
+          {message}
+        </div>
+      )}
+
       <div className="flex justify-between mb-6 flex-wrap gap-4">
         <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-md w-64">
           <Search size={18} className="text-gray-400" />
@@ -150,6 +159,7 @@ const handleView = async (id) => {
               <th className="p-3 text-left">Year</th>
               <th className="p-3 text-left">Semester</th>
               <th className="p-3 text-left">Sensitivity</th>
+              <th className="p-3 text-left">Status</th>
               <th className="p-3 text-left">Uploaded By</th>
               <th className="p-3 text-left">Downloads</th>
               <th className="p-3 text-center">Actions</th>
@@ -165,6 +175,19 @@ const handleView = async (id) => {
                 <td className="p-3">{file.year}</td>
                 <td className="p-3">{file.semester}</td>
                 <td className="p-3">{file.sensitivity}</td>
+                <td className="p-3">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs ${
+                      file.status === "APPROVED"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : file.status === "REJECTED"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {file.status || "APPROVED"}
+                  </span>
+                </td>
                 <td className="p-3">{file.uploadedBy?.name}</td>
                 <td className="p-3">{file.downloadCount}</td>
 
@@ -186,7 +209,6 @@ const handleView = async (id) => {
 >
   <Download size={18} />
 </button>
-
 
                   {/* DELETE - ADMIN always, FACULTY own file */}
                   {(user?.role === "ADMIN" ||

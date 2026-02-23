@@ -61,6 +61,12 @@ function StudentBrowseFiles() {
   const [error, setError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [search, setSearch] = useState("");
+  const [activeFeedbackFileId, setActiveFeedbackFileId] = useState("");
+  const [feedbackForm, setFeedbackForm] = useState({
+    rating: 5,
+    isHelpful: true,
+    comment: ""
+  });
 
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
@@ -235,6 +241,66 @@ function StudentBrowseFiles() {
       setActionMessage("Access request submitted");
     } catch (err) {
       setActionMessage(err?.response?.data?.message || "Failed to submit access request");
+    }
+  };
+
+  const handleOpenFeedback = async (fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get(`/file/${fileId}/ratings`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" }
+      });
+      setActiveFeedbackFileId(fileId);
+      if (res.data?.myFeedback) {
+        setFeedbackForm({
+          rating: res.data.myFeedback.rating || 5,
+          isHelpful: Boolean(res.data.myFeedback.isHelpful),
+          comment: res.data.myFeedback.comment || ""
+        });
+      } else {
+        setFeedbackForm({
+          rating: 5,
+          isHelpful: true,
+          comment: ""
+        });
+      }
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Unable to load feedback form");
+    }
+  };
+
+  const handleSubmitFeedback = async (fileId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.post(
+        "/feedback",
+        {
+          fileId,
+          rating: Number(feedbackForm.rating),
+          isHelpful: Boolean(feedbackForm.isHelpful),
+          comment: feedbackForm.comment
+        },
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" }
+        }
+      );
+
+      setFiles((prev) =>
+        prev.map((file) =>
+          file._id === fileId
+            ? {
+              ...file,
+              avgRating: res.data.avgRating,
+              totalRatings: res.data.totalRatings,
+              helpfulPercentage: res.data.helpfulPercentage
+            }
+            : file
+        )
+      );
+      setActionMessage("Feedback saved.");
+      setActiveFeedbackFileId("");
+    } catch (err) {
+      setActionMessage(err?.response?.data?.message || "Failed to save feedback");
     }
   };
 
@@ -488,6 +554,10 @@ function StudentBrowseFiles() {
                                   <p className="text-xs text-gray-500 mt-1">
                                     {file.subject} • {new Date(file.createdAt).toLocaleDateString()}
                                   </p>
+                                  <p className="text-xs text-amber-700 mt-1">
+                                    Rating: {Number(file.avgRating || 0).toFixed(1)} / 5 ({file.totalRatings || 0} votes)
+                                    {" "}• Helpful: {Number(file.helpfulPercentage || 0).toFixed(0)}%
+                                  </p>
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -505,6 +575,13 @@ function StudentBrowseFiles() {
                                     }`}
                                   >
                                     <Star size={14} /> {file.isBookmarked ? "Starred" : "Star"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenFeedback(file._id)}
+                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
+                                  >
+                                    Rate
                                   </button>
                                   <button
                                     type="button"
@@ -533,6 +610,77 @@ function StudentBrowseFiles() {
                                   )}
                                 </div>
                               </div>
+
+                              {activeFeedbackFileId === file._id && (
+                                <div className="mt-3 rounded-lg border bg-white p-3">
+                                  <p className="text-xs font-semibold text-slate-700 mb-2">Your Feedback</p>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    {[1, 2, 3, 4, 5].map((value) => (
+                                      <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => setFeedbackForm((prev) => ({ ...prev, rating: value }))}
+                                        className={`text-sm rounded px-2 py-1 border ${
+                                          Number(feedbackForm.rating) >= value
+                                            ? "bg-amber-100 border-amber-300 text-amber-800"
+                                            : "bg-white text-slate-600"
+                                        }`}
+                                      >
+                                        {value}★
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setFeedbackForm((prev) => ({ ...prev, isHelpful: true }))}
+                                      className={`text-xs rounded border px-2 py-1 ${
+                                        feedbackForm.isHelpful
+                                          ? "bg-emerald-100 border-emerald-300 text-emerald-700"
+                                          : "bg-white text-slate-600"
+                                      }`}
+                                    >
+                                      Helpful
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setFeedbackForm((prev) => ({ ...prev, isHelpful: false }))}
+                                      className={`text-xs rounded border px-2 py-1 ${
+                                        !feedbackForm.isHelpful
+                                          ? "bg-rose-100 border-rose-300 text-rose-700"
+                                          : "bg-white text-slate-600"
+                                      }`}
+                                    >
+                                      Not Helpful
+                                    </button>
+                                  </div>
+                                  <textarea
+                                    value={feedbackForm.comment}
+                                    onChange={(e) =>
+                                      setFeedbackForm((prev) => ({ ...prev, comment: e.target.value }))
+                                    }
+                                    rows={2}
+                                    placeholder="Optional comment"
+                                    className="w-full rounded border px-2 py-1 text-xs"
+                                  />
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSubmitFeedback(file._id)}
+                                      className="rounded bg-[#64242F] px-3 py-1 text-xs text-white"
+                                    >
+                                      Save Feedback
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setActiveFeedbackFileId("")}
+                                      className="rounded border px-3 py-1 text-xs"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))
                         ) : (

@@ -18,6 +18,7 @@ import {
   LinearScale,
   BarElement
 } from "chart.js";
+import Pagination from "../../components/Pagination";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -33,6 +34,10 @@ function FacultyDashboard() {
   const [categoryData, setCategoryData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [recentUploads, setRecentUploads] = useState([]);
+  const [topRatedFiles, setTopRatedFiles] = useState([]);
+  const [recentPage, setRecentPage] = useState(1);
+  const [topRatedPage, setTopRatedPage] = useState(1);
+  const rowsPerPage = 6;
 
   const authConfig = useMemo(() => {
     const token = sessionStorage.getItem("token");
@@ -47,12 +52,13 @@ function FacultyDashboard() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [meRes, statsRes, categoryRes, monthlyRes, recentRes] = await Promise.all([
+        const [meRes, statsRes, categoryRes, monthlyRes, recentRes, topRatedRes] = await Promise.all([
           axios.get("/auth/me", authConfig),
           axios.get("/faculty/my-stats", authConfig),
           axios.get("/faculty/category-distribution", authConfig),
           axios.get("/faculty/monthly-uploads", authConfig),
-          axios.get("/faculty/recent-uploads", authConfig)
+          axios.get("/faculty/recent-uploads", authConfig),
+          axios.get("/faculty/top-rated", authConfig)
         ]);
 
         setFacultyName(meRes.data?.name || "Faculty");
@@ -65,6 +71,7 @@ function FacultyDashboard() {
         setCategoryData(categoryRes.data || []);
         setMonthlyData(monthlyRes.data || []);
         setRecentUploads(recentRes.data || []);
+        setTopRatedFiles(topRatedRes.data || []);
       } catch (error) {
         console.error("Faculty dashboard load failed:", error);
       } finally {
@@ -105,6 +112,21 @@ function FacultyDashboard() {
       }
     ]
   };
+
+  const recentTotalPages = Math.max(1, Math.ceil(recentUploads.length / rowsPerPage));
+  const topRatedTotalPages = Math.max(1, Math.ceil(topRatedFiles.length / rowsPerPage));
+  const safeRecentPage = Math.min(recentPage, recentTotalPages);
+  const safeTopRatedPage = Math.min(topRatedPage, topRatedTotalPages);
+
+  const paginatedRecentUploads = useMemo(() => {
+    const start = (safeRecentPage - 1) * rowsPerPage;
+    return recentUploads.slice(start, start + rowsPerPage);
+  }, [recentUploads, safeRecentPage]);
+
+  const paginatedTopRatedFiles = useMemo(() => {
+    const start = (safeTopRatedPage - 1) * rowsPerPage;
+    return topRatedFiles.slice(start, start + rowsPerPage);
+  }, [safeTopRatedPage, topRatedFiles]);
 
   if (loading) {
     return (
@@ -188,7 +210,7 @@ function FacultyDashboard() {
         <div className="p-6 pb-3">
           <h3 className="font-semibold text-slate-800">Recent Uploads</h3>
         </div>
-        <div className="max-h-80 overflow-y-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-slate-50">
               <tr>
@@ -200,8 +222,8 @@ function FacultyDashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentUploads.length > 0 ? (
-                recentUploads.map((file) => (
+              {paginatedRecentUploads.length > 0 ? (
+                paginatedRecentUploads.map((file) => (
                   <tr key={file._id} className="border-t border-slate-100">
                     <td className="p-3">{file.fileName}</td>
                     <td className="p-3">{file.category}</td>
@@ -219,6 +241,66 @@ function FacultyDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-5 pt-0">
+          <Pagination currentPage={safeRecentPage} totalPages={recentTotalPages} onPageChange={setRecentPage} />
+        </div>
+      </section>
+
+      <section className="bg-white rounded-xl shadow-sm border border-slate-100">
+        <div className="p-6 pb-3">
+          <h3 className="font-semibold text-slate-800">My Top Rated Files</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-slate-50">
+              <tr>
+                <th className="p-3 text-left">File</th>
+                <th className="p-3 text-left">Avg Rating</th>
+                <th className="p-3 text-left">Feedback Count</th>
+                <th className="p-3 text-left">Helpful %</th>
+                <th className="p-3 text-left">Recent Comments</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedTopRatedFiles.length > 0 ? (
+                paginatedTopRatedFiles.map((item) => (
+                  <tr key={item._id} className="border-t border-slate-100">
+                    <td className="p-3">{item.fileName}</td>
+                    <td className="p-3">{Number(item.avgRating || 0).toFixed(1)}</td>
+                    <td className="p-3">{item.totalFeedbackCount || 0}</td>
+                    <td className="p-3">{Number(item.helpfulPercentage || 0).toFixed(1)}%</td>
+                    <td className="p-3">
+                      {item.recentComments?.length ? (
+                        <div className="space-y-1">
+                          {item.recentComments.map((comment, idx) => (
+                            <p key={`${item._id}_c_${idx}`} className="text-xs text-slate-600">
+                              • {comment}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">No comments</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="p-3 text-slate-500" colSpan={5}>
+                    No rating data available yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-5 pt-0">
+          <Pagination
+            currentPage={safeTopRatedPage}
+            totalPages={topRatedTotalPages}
+            onPageChange={setTopRatedPage}
+          />
         </div>
       </section>
     </div>

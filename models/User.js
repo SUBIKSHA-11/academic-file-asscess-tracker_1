@@ -35,6 +35,23 @@ department: {
       min: 1,
       max: 4,
     },
+    lastLoginDate: {
+      type: Date
+    },
+    currentStreak: {
+      type: Number,
+      default: 0
+    },
+    longestStreak: {
+      type: Number,
+      default: 0
+    },
+    badges: [
+      {
+        name: { type: String, required: true },
+        earnedAt: { type: Date, required: true }
+      }
+    ]
   },
   { timestamps: true }
 );

@@ -1,23 +1,29 @@
 import { useEffect, useState } from "react";
 import axios from "../api/axios";
 import { Plus } from "lucide-react";
+import Pagination from "../components/Pagination";
 
 function Departments() {
   const [departments, setDepartments] = useState([]);
   const [name, setName] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
+  const totalPages = Math.max(1, Math.ceil(departments.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  async function fetchDepartments() {
+    try {
+      const res = await axios.get("/departments/stats");
+      setDepartments(res.data);
+    } catch (err) {
+      console.error("Department fetch failed", err);
+    }
+  }
 
   useEffect(() => {
-    fetchDepartments();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchDepartments();
   }, []);
-
-const fetchDepartments = async () => {
-  try {
-    const res = await axios.get("/departments/stats");
-    setDepartments(res.data);
-  } catch (err) {
-    console.error("Department fetch failed", err);
-  }
-};
 
 
   const addDepartment = async (e) => {
@@ -34,6 +40,9 @@ const toggleDepartment = async (id) => {
     console.error("Toggle failed", error);
   }
 };
+
+  const start = (safeCurrentPage - 1) * rowsPerPage;
+  const paginatedDepartments = departments.slice(start, start + rowsPerPage);
 
 
   return (
@@ -78,7 +87,7 @@ const toggleDepartment = async (id) => {
           </thead>
 
           <tbody>
-            {departments.map((dept) => (
+            {paginatedDepartments.map((dept) => (
               <tr key={dept.name} className="border-b">
                 <td className="p-3">{dept.name}</td>
                 <td className="p-3">{dept.facultyCount}</td>
@@ -104,9 +113,18 @@ const toggleDepartment = async (id) => {
 
               </tr>
             ))}
+            {departments.length === 0 && (
+              <tr>
+                <td colSpan={6} className="p-4 text-center text-slate-500">
+                  No departments found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={safeCurrentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 }

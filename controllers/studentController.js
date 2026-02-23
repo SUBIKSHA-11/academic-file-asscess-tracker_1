@@ -4,6 +4,7 @@ const ActivityLog = require("../models/ActivityLog");
 const FileBookmark = require("../models/FileBookmark");
 const TemporaryAccess = require("../models/TemporaryAccess");
 const AccessRequest = require("../models/AccessRequest");
+const User = require("../models/User");
 const mongoose = require("mongoose");
 const normalizeSensitivity = (value) => {
   const normalized = String(value || "PUBLIC").trim().toUpperCase();
@@ -32,7 +33,7 @@ const getStudentFiles = async (req, res) => {
         { $or: [{ status: "APPROVED" }, { status: { $exists: false } }] }
       ]
     })
-      .select("fileName semester category department subject downloadCount createdAt sensitivity")
+      .select("fileName semester category department subject downloadCount createdAt sensitivity avgRating totalRatings helpfulPercentage")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -57,6 +58,9 @@ const getStudentFiles = async (req, res) => {
       },
       subject: file.subject,
       downloadCount: file.downloadCount || 0,
+      avgRating: file.avgRating || 0,
+      totalRatings: file.totalRatings || 0,
+      helpfulPercentage: file.helpfulPercentage || 0,
       createdAt: file.createdAt,
       sensitivity: normalizeSensitivity(file.sensitivity),
       canAccess: normalizeSensitivity(file.sensitivity) === "PUBLIC" || tempAccessIds.has(String(file._id)),
@@ -77,7 +81,7 @@ const getStudentMyStats = async (req, res) => {
     weekStart.setHours(0, 0, 0, 0);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
 
-    const [downloads, views, totalAccessResult, uniqueFiles, downloadsThisWeek, categoryAgg] = await Promise.all([
+    const [downloads, views, totalAccessResult, uniqueFiles, downloadsThisWeek, categoryAgg, student] = await Promise.all([
       ActivityLog.countDocuments({ user: userId, action: "DOWNLOAD" }),
       ActivityLog.countDocuments({ user: userId, action: "VIEW" }),
       ActivityLog.countDocuments({ user: userId, action: { $in: ["VIEW", "DOWNLOAD"] } }),
@@ -111,7 +115,8 @@ const getStudentMyStats = async (req, res) => {
         },
         { $sort: { count: -1 } },
         { $limit: 1 }
-      ])
+      ]),
+      User.findById(userId).select("currentStreak longestStreak badges").lean()
     ]);
 
     res.json({
@@ -120,7 +125,10 @@ const getStudentMyStats = async (req, res) => {
       totalAccessActions: totalAccessResult,
       uniqueFilesAccessed: uniqueFiles.length,
       downloadsThisWeek,
-      mostDownloadedCategory: categoryAgg[0]?._id || "N/A"
+      mostDownloadedCategory: categoryAgg[0]?._id || "N/A",
+      currentStreak: student?.currentStreak || 0,
+      longestStreak: student?.longestStreak || 0,
+      badges: student?.badges || []
     });
   } catch (error) {
     console.error(error);

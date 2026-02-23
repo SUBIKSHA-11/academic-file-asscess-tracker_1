@@ -6,7 +6,8 @@ import {
   AlertTriangle,
   Users,
   LogOut,
-  Building
+  Building,
+  CheckSquare
 } from "lucide-react";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
@@ -42,6 +43,12 @@ function Sidebar() {
         {isAdmin && (
           <Link to="/suspicious" className="flex items-center gap-3 hover:text-[#A2AC82] transition-colors">
             <AlertTriangle size={18} /> Suspicious
+          </Link>
+        )}
+
+        {isAdmin && (
+          <Link to="/approvals" className="flex items-center gap-3 hover:text-[#A2AC82] transition-colors">
+            <CheckSquare size={18} /> Approvals
           </Link>
         )}
 

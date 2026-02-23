@@ -3,6 +3,17 @@ const Department = require("../models/Department");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const startOfDay = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const daysBetween = (a, b) => {
+  const ms = startOfDay(a).getTime() - startOfDay(b).getTime();
+  return Math.round(ms / (24 * 60 * 60 * 1000));
+};
+
 // REGISTER
 const register = async (req, res) => {
   try {
@@ -110,6 +121,36 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
+    }
+
+    if (user.role === "STUDENT") {
+      const now = new Date();
+      const last = user.lastLoginDate ? new Date(user.lastLoginDate) : null;
+      const dayGap = last ? daysBetween(now, last) : null;
+
+      if (dayGap === null) {
+        user.currentStreak = 1;
+      } else if (dayGap === 0) {
+        // same day login: keep current streak
+      } else if (dayGap === 1) {
+        user.currentStreak = Number(user.currentStreak || 0) + 1;
+      } else {
+        user.currentStreak = 1;
+      }
+
+      user.longestStreak = Math.max(Number(user.longestStreak || 0), Number(user.currentStreak || 0));
+      user.lastLoginDate = now;
+      user.badges = Array.isArray(user.badges) ? user.badges : [];
+
+      const maybeAddBadge = (name, threshold) => {
+        if (user.currentStreak >= threshold && !user.badges.some((b) => b?.name === name)) {
+          user.badges.push({ name, earnedAt: now });
+        }
+      };
+
+      maybeAddBadge("Consistent Learner", 7);
+      maybeAddBadge("Academic Pro", 30);
+      await user.save();
     }
 
     const token = jwt.sign(

@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
 import { Search, Eye, Download } from "lucide-react";
+import Pagination from "../../components/Pagination";
 
 function MyFiles() {
   const [files, setFiles] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
 
   const authConfig = useMemo(() => {
     const token = sessionStorage.getItem("token");
@@ -16,18 +19,19 @@ function MyFiles() {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchMyFiles = async () => {
-      try {
-        const res = await axios.get("/faculty/my-files", authConfig);
-        setFiles(res.data || []);
-      } catch (error) {
-        console.error("Failed to fetch faculty files", error);
-      }
-    };
-
-    fetchMyFiles();
+  const fetchMyFiles = useCallback(async () => {
+    try {
+      const res = await axios.get("/faculty/my-files", authConfig);
+      setFiles(res.data || []);
+    } catch (error) {
+      console.error("Failed to fetch faculty files", error);
+    }
   }, [authConfig]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchMyFiles();
+  }, [fetchMyFiles]);
 
   const handleView = async (id) => {
     try {
@@ -70,11 +74,20 @@ function MyFiles() {
     return bySearch && byCategory;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredFiles.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedFiles = useMemo(() => {
+    const start = (safeCurrentPage - 1) * rowsPerPage;
+    return filteredFiles.slice(start, start + rowsPerPage);
+  }, [filteredFiles, safeCurrentPage]);
+
   return (
     <div className="space-y-5">
       <div className="rounded-2xl bg-[#0B2E33] text-[#B8E3E9] shadow-md p-6">
         <h2 className="text-2xl font-bold">My Files</h2>
-        <p className="text-[#93B1B5] mt-1">View and download only your uploaded files.</p>
+        <p className="text-[#93B1B5] mt-1">
+          Uploaded files stay pending until admin approves and publishes them for students.
+        </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
@@ -83,7 +96,10 @@ function MyFiles() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search file name..."
             className="w-full outline-none text-sm"
           />
@@ -92,7 +108,10 @@ function MyFiles() {
         <div className="flex gap-3">
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"
           >
             <option value="">All Categories</option>
@@ -116,6 +135,7 @@ function MyFiles() {
               <th className="p-3 text-left">Department</th>
               <th className="p-3 text-left">Uploaded By</th>
               <th className="p-3 text-left">Access</th>
+              <th className="p-3 text-left">Status</th>
               <th className="p-3 text-left">View Count</th>
               <th className="p-3 text-left">Download Count</th>
               <th className="p-3 text-center">View</th>
@@ -123,8 +143,8 @@ function MyFiles() {
             </tr>
           </thead>
           <tbody>
-            {filteredFiles.length > 0 ? (
-              filteredFiles.map((file) => (
+            {paginatedFiles.length > 0 ? (
+              paginatedFiles.map((file) => (
                 <tr key={file._id} className="border-t border-slate-100">
                   <td className="p-3">{file.fileName}</td>
                   <td className="p-3">{file.subject}</td>
@@ -132,6 +152,19 @@ function MyFiles() {
                   <td className="p-3">{file.department}</td>
                   <td className="p-3">{file.uploadedBy?.name || "-"}</td>
                   <td className="p-3">{file.sensitivity}</td>
+                  <td className="p-3">
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs ${
+                        file.status === "APPROVED"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : file.status === "REJECTED"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {file.status || "APPROVED"}
+                    </span>
+                  </td>
                   <td className="p-3">{file.viewCount || 0}</td>
                   <td className="p-3">{file.downloadCount || 0}</td>
                   <td className="p-3 text-center">
@@ -156,7 +189,7 @@ function MyFiles() {
               ))
             ) : (
               <tr>
-                <td colSpan={10} className="p-4 text-center text-slate-500">
+                <td colSpan={11} className="p-4 text-center text-slate-500">
                   No files found.
                 </td>
               </tr>
@@ -164,6 +197,8 @@ function MyFiles() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={safeCurrentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 }

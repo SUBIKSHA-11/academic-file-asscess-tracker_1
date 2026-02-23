@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
 import { Search, Eye, Download } from "lucide-react";
+import Pagination from "../../components/Pagination";
 
 function DepartmentFiles() {
   const [files, setFiles] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [department, setDepartment] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
 
   const authConfig = useMemo(() => {
     const token = sessionStorage.getItem("token");
@@ -72,6 +75,13 @@ function DepartmentFiles() {
     return bySearch && byCategory && byDepartment;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredFiles.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedFiles = useMemo(() => {
+    const start = (safeCurrentPage - 1) * rowsPerPage;
+    return filteredFiles.slice(start, start + rowsPerPage);
+  }, [filteredFiles, safeCurrentPage]);
+
   const departments = [...new Set(files.map((f) => f.department).filter(Boolean))];
 
   return (
@@ -87,7 +97,10 @@ function DepartmentFiles() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search file name..."
             className="w-full outline-none text-sm"
           />
@@ -96,7 +109,10 @@ function DepartmentFiles() {
         <div className="flex gap-3">
           <select
             value={department}
-            onChange={(e) => setDepartment(e.target.value)}
+            onChange={(e) => {
+              setDepartment(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"
           >
             <option value="">All Departments</option>
@@ -109,7 +125,10 @@ function DepartmentFiles() {
 
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"
           >
             <option value="">All Categories</option>
@@ -140,8 +159,8 @@ function DepartmentFiles() {
             </tr>
           </thead>
           <tbody>
-            {filteredFiles.length > 0 ? (
-              filteredFiles.map((file) => (
+            {paginatedFiles.length > 0 ? (
+              paginatedFiles.map((file) => (
                 <tr key={file._id} className="border-t border-slate-100">
                   <td className="p-3">{file.fileName}</td>
                   <td className="p-3">{file.subject}</td>
@@ -181,6 +200,8 @@ function DepartmentFiles() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={safeCurrentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 }

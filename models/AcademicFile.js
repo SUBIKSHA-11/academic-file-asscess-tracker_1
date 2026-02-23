@@ -59,6 +59,22 @@ const fileSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    avgRating: {
+      type: Number,
+      default: 0
+    },
+    totalRatings: {
+      type: Number,
+      default: 0
+    },
+    totalHelpful: {
+      type: Number,
+      default: 0
+    },
+    helpfulPercentage: {
+      type: Number,
+      default: 0
+    },
     status: {
       type: String,
       enum: ["PENDING", "APPROVED", "REJECTED"],

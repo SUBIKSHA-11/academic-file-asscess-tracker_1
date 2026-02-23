@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const AcademicFile = require("../models/AcademicFile");
+const FileFeedback = require("../models/FileFeedback");
 const latestFilter = {
   $or: [{ latestVersion: true }, { latestVersion: { $exists: false } }]
 };
@@ -148,11 +149,116 @@ const getAllFiles = async (req, res) => {
   }
 };
 
+const getTopRatedFiles = async (req, res) => {
+  try {
+    const facultyId = new mongoose.Types.ObjectId(req.user.userId || req.user.id);
+    const feedbackCollection = FileFeedback.collection.name;
+
+    const result = await AcademicFile.aggregate([
+      {
+        $match: {
+          uploadedBy: facultyId
+        }
+      },
+      {
+        $lookup: {
+          from: feedbackCollection,
+          localField: "_id",
+          foreignField: "fileId",
+          as: "feedbacks"
+        }
+      },
+      {
+        $project: {
+          fileName: 1,
+          subject: 1,
+          department: 1,
+          avgRating: {
+            $cond: [
+              { $gt: [{ $size: "$feedbacks" }, 0] },
+              { $round: [{ $avg: "$feedbacks.rating" }, 2] },
+              0
+            ]
+          },
+          totalFeedbackCount: { $size: "$feedbacks" },
+          helpfulCount: {
+            $size: {
+              $filter: {
+                input: "$feedbacks",
+                as: "fb",
+                cond: { $eq: ["$$fb.isHelpful", true] }
+              }
+            }
+          },
+          recentComments: {
+            $slice: [
+              {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: "$feedbacks",
+                      as: "fb",
+                      cond: {
+                        $and: [
+                          { $ne: ["$$fb.comment", null] },
+                          { $ne: ["$$fb.comment", ""] }
+                        ]
+                      }
+                    }
+                  },
+                  as: "c",
+                  in: "$$c.comment"
+                }
+              },
+              3
+            ]
+          }
+        }
+      },
+      {
+        $addFields: {
+          helpfulPercentage: {
+            $cond: [
+              { $gt: ["$totalFeedbackCount", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      { $divide: ["$helpfulCount", "$totalFeedbackCount"] },
+                      100
+                    ]
+                  },
+                  2
+                ]
+              },
+              0
+            ]
+          }
+        }
+      },
+      {
+        $sort: {
+          avgRating: -1,
+          totalFeedbackCount: -1,
+          fileName: 1
+        }
+      },
+      { $limit: 20 }
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch top rated files" });
+  }
+};
+
 module.exports = {
   getFacultyStats,
   getMyFiles,
   getAllFiles,
   getCategoryDistribution,
   getMonthlyUploads,
-  getRecentUploads
+  getRecentUploads,
+  getTopRatedFiles
 };

@@ -64,8 +64,13 @@ function FacultyUpload() {
       formData.append("category", form.category);
       formData.append("sensitivity", form.sensitivity);
 
-      await axios.post("/files/upload", formData, authConfig);
-      setMessage("File uploaded successfully");
+      const res = await axios.post("/files/upload", formData, authConfig);
+      const uploadedStatus = res?.data?.file?.status || "PENDING";
+      setMessage(
+        uploadedStatus === "APPROVED"
+          ? "File uploaded and published"
+          : "File uploaded successfully. It will be visible to students only after admin approval."
+      );
       setFile(null);
       setForm({
         year: "",
