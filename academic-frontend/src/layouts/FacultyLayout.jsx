@@ -5,6 +5,7 @@ import {
   FolderGit2,
   Upload,
   BarChart3,
+  ClipboardList,
   LogOut
 } from "lucide-react";
 import { useContext } from "react";
@@ -21,6 +22,7 @@ function FacultyLayout() {
     { to: "/faculty/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/faculty/files", label: "My Files", icon: FolderOpen },
     { to: "/faculty/department-files", label: "Department Files", icon: FolderGit2 },
+    { to: "/faculty/logs", label: "Access Logs", icon: ClipboardList },
     { to: "/faculty/upload", label: "Upload File", icon: Upload },
     { to: "/faculty/analytics", label: "Analytics", icon: BarChart3 }
   ];

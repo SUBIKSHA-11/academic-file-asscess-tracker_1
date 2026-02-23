@@ -6,6 +6,8 @@ const TemporaryAccess = require("../models/TemporaryAccess");
 const AccessRequest = require("../models/AccessRequest");
 const User = require("../models/User");
 const mongoose = require("mongoose");
+const StudyFolder = require("../models/StudyFolder");
+const StudyPlanItem = require("../models/StudyPlanItem");
 const normalizeSensitivity = (value) => {
   const normalized = String(value || "PUBLIC").trim().toUpperCase();
   if (["PUBLIC", "INTERNAL", "CONFIDENTIAL"].includes(normalized)) {
@@ -369,6 +371,191 @@ const getMyAccessRequests = async (req, res) => {
   }
 };
 
+const getStudyFolders = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const folders = await StudyFolder.find({ user: studentId })
+      .populate({
+        path: "files",
+        select: "fileName subject category semester department"
+      })
+      .sort({ createdAt: -1 });
+
+    res.json(folders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch study folders" });
+  }
+};
+
+const createStudyFolder = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const { name, subject = "" } = req.body;
+
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ message: "Folder name is required" });
+    }
+
+    const folder = await StudyFolder.create({
+      user: studentId,
+      name: String(name).trim(),
+      subject: String(subject || "").trim()
+    });
+
+    res.status(201).json(folder);
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({ message: "Folder with this name already exists" });
+    }
+    console.error(error);
+    res.status(500).json({ message: "Failed to create folder" });
+  }
+};
+
+const addFileToStudyFolder = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const { folderId, fileId } = req.params;
+
+    const folder = await StudyFolder.findOne({ _id: folderId, user: studentId });
+    if (!folder) {
+      return res.status(404).json({ message: "Folder not found" });
+    }
+
+    const file = await AcademicFile.findById(fileId).select("_id fileName");
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    const alreadySaved = folder.files.some((id) => String(id) === String(fileId));
+    if (alreadySaved) {
+      return res.status(409).json({ message: "File already exists in this folder" });
+    }
+
+    folder.files.push(fileId);
+    await folder.save();
+
+    res.json({ message: "File saved to study folder" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to save file to folder" });
+  }
+};
+
+const removeFileFromStudyFolder = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const { folderId, fileId } = req.params;
+
+    const folder = await StudyFolder.findOne({ _id: folderId, user: studentId });
+    if (!folder) {
+      return res.status(404).json({ message: "Folder not found" });
+    }
+
+    folder.files = folder.files.filter((id) => String(id) !== String(fileId));
+    await folder.save();
+
+    res.json({ message: "File removed from study folder" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to remove file from folder" });
+  }
+};
+
+const getStudyPlan = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const items = await StudyPlanItem.find({ user: studentId })
+      .populate("file", "fileName subject category semester department")
+      .sort({ isCompleted: 1, reminderAt: 1, createdAt: -1 });
+
+    res.json(items);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch study plan" });
+  }
+};
+
+const addToStudyPlan = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const { fileId } = req.params;
+    const { reminderAt, note = "" } = req.body;
+
+    const file = await AcademicFile.findById(fileId).select("_id");
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    const existing = await StudyPlanItem.findOne({ user: studentId, file: fileId });
+    if (existing) {
+      return res.status(409).json({ message: "File already added to study plan" });
+    }
+
+    const item = await StudyPlanItem.create({
+      user: studentId,
+      file: fileId,
+      reminderAt: reminderAt ? new Date(reminderAt) : undefined,
+      note: String(note || "").trim()
+    });
+
+    res.status(201).json(item);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to add file to study plan" });
+  }
+};
+
+const updateStudyPlanItem = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const { itemId } = req.params;
+    const { reminderAt, note, isCompleted } = req.body;
+
+    const item = await StudyPlanItem.findOne({ _id: itemId, user: studentId });
+    if (!item) {
+      return res.status(404).json({ message: "Study plan item not found" });
+    }
+
+    if (typeof isCompleted === "boolean") {
+      item.isCompleted = isCompleted;
+      item.completedAt = isCompleted ? new Date() : null;
+    }
+
+    if (typeof note === "string") {
+      item.note = note.trim();
+    }
+
+    if (reminderAt !== undefined) {
+      item.reminderAt = reminderAt ? new Date(reminderAt) : null;
+    }
+
+    await item.save();
+    res.json({ message: "Study plan updated", item });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update study plan item" });
+  }
+};
+
+const deleteStudyPlanItem = async (req, res) => {
+  try {
+    const studentId = req.user.userId || req.user.id;
+    const { itemId } = req.params;
+
+    const deleted = await StudyPlanItem.findOneAndDelete({ _id: itemId, user: studentId });
+    if (!deleted) {
+      return res.status(404).json({ message: "Study plan item not found" });
+    }
+
+    res.json({ message: "Study plan item removed" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to remove study plan item" });
+  }
+};
+
 module.exports = {
   getStudentFiles,
   getStudentMyStats,
@@ -378,5 +565,13 @@ module.exports = {
   toggleBookmark,
   getRecentFiles,
   requestRestrictedAccess,
-  getMyAccessRequests
+  getMyAccessRequests,
+  getStudyFolders,
+  createStudyFolder,
+  addFileToStudyFolder,
+  removeFileFromStudyFolder,
+  getStudyPlan,
+  addToStudyPlan,
+  updateStudyPlanItem,
+  deleteStudyPlanItem
 };

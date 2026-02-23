@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const AcademicFile = require("../models/AcademicFile");
 const FileFeedback = require("../models/FileFeedback");
+const ActivityLog = require("../models/ActivityLog");
 const latestFilter = {
   $or: [{ latestVersion: true }, { latestVersion: { $exists: false } }]
 };
@@ -253,6 +254,67 @@ const getTopRatedFiles = async (req, res) => {
   }
 };
 
+const getFacultyLogs = async (req, res) => {
+  try {
+    const {
+      action,
+      from,
+      to,
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    const uploadedFiles = await AcademicFile.find(
+      { uploadedBy: req.user.id },
+      "_id"
+    ).lean();
+
+    const fileIds = uploadedFiles.map((file) => file._id);
+    if (fileIds.length === 0) {
+      return res.json({
+        logs: [],
+        totalLogs: 0,
+        totalPages: 1,
+        currentPage: Number(page)
+      });
+    }
+
+    const filter = { file: { $in: fileIds } };
+
+    if (action && action !== "ALL") {
+      filter.action = action;
+    }
+
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
+    }
+
+    const pageNumber = Number(page);
+    const pageSize = Number(limit);
+    const skip = (pageNumber - 1) * pageSize;
+
+    const totalLogs = await ActivityLog.countDocuments(filter);
+    const logs = await ActivityLog.find(filter)
+      .populate("user", "name role")
+      .populate("file", "fileName")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize);
+
+    res.json({
+      logs,
+      totalLogs,
+      totalPages: Math.max(1, Math.ceil(totalLogs / pageSize)),
+      currentPage: pageNumber
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch faculty logs" });
+  }
+};
+
 module.exports = {
   getFacultyStats,
   getMyFiles,
@@ -260,5 +322,6 @@ module.exports = {
   getCategoryDistribution,
   getMonthlyUploads,
   getRecentUploads,
-  getTopRatedFiles
+  getTopRatedFiles,
+  getFacultyLogs
 };
