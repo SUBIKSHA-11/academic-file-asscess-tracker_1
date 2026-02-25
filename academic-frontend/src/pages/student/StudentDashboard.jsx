@@ -174,22 +174,22 @@ function StudentDashboard() {
         {cards.map((card) => (
           <div
             key={card.label}
-            className="theme-card theme-card--student min-h-[170px]"
+            className="theme-card theme-card--student min-h-[136px]"
           >
             <div className="text-[#64242F]">{card.icon}</div>
-            <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-[#64242F]/80">{card.label}</p>
-            <p className="mt-2 text-4xl font-black leading-none text-[#64242F]">{card.value}</p>
+            <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-[#64242F]/80">{card.label}</p>
+            <p className="mt-1 text-3xl font-black leading-none text-[#64242F]">{card.value}</p>
           </div>
         ))}
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="theme-card theme-card--student min-h-[170px]">
+        <div className="theme-card theme-card--student min-h-[130px]">
           <p className="text-xs text-slate-500">Current Streak</p>
           <p className="mt-1 text-2xl font-bold text-[#64242F]">🔥 {stats.currentStreak} days</p>
           <p className="text-xs text-slate-500 mt-1">Keep logging in daily to build consistency.</p>
         </div>
-        <div className="theme-card theme-card--student min-h-[170px]">
+        <div className="theme-card theme-card--student min-h-[130px]">
           <p className="text-xs text-slate-500">Longest Streak</p>
           <p className="mt-1 text-2xl font-bold text-[#64242F]">🏆 {stats.longestStreak} days</p>
           <p className="text-xs text-slate-500 mt-1">Your best continuous login record.</p>
@@ -253,15 +253,15 @@ function StudentDashboard() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="theme-card theme-card--student min-h-[145px]">
+            <div className="theme-card theme-card--student min-h-[116px]">
               <p className="text-xs text-slate-500">Most Downloaded Category</p>
               <p className="text-xl font-bold text-slate-800 mt-1">{prettyCategory}</p>
             </div>
-            <div className="theme-card theme-card--student min-h-[145px]">
+            <div className="theme-card theme-card--student min-h-[116px]">
               <p className="text-xs text-slate-500">Total Activity</p>
               <p className="text-xl font-bold text-slate-800 mt-1">{stats.totalAccessActions}</p>
             </div>
-            <div className="theme-card theme-card--student min-h-[145px]">
+            <div className="theme-card theme-card--student min-h-[116px]">
               <p className="text-xs text-slate-500">Active Days</p>
               <p className="text-xl font-bold text-slate-800 mt-1">
                 {activeDays} <span className="text-sm font-medium text-slate-500">/ 120</span>

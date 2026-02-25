@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
-import { Search, Eye, Download } from "lucide-react";
+import { Search, Eye, Download, MessageSquare, X } from "lucide-react";
 import Pagination from "../../components/Pagination";
 
 function MyFiles() {
@@ -8,6 +8,10 @@ function MyFiles() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [discussionFile, setDiscussionFile] = useState(null);
+  const [discussionComments, setDiscussionComments] = useState([]);
+  const [discussionInput, setDiscussionInput] = useState("");
   const rowsPerPage = 8;
 
   const authConfig = useMemo(() => {
@@ -65,6 +69,34 @@ function MyFiles() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed", error);
+    }
+  };
+
+  const openDiscussion = async (file) => {
+    try {
+      const res = await axios.get(`/discussions/${file._id}`, authConfig);
+      setDiscussionComments(res.data || []);
+      setDiscussionFile(file);
+      setDiscussionInput("");
+      setDiscussionOpen(true);
+    } catch (error) {
+      console.error("Failed to load discussion", error);
+    }
+  };
+
+  const postDiscussionComment = async () => {
+    try {
+      if (!discussionFile || !discussionInput.trim()) return;
+      await axios.post(
+        `/discussions/${discussionFile._id}`,
+        { message: discussionInput },
+        authConfig
+      );
+      const res = await axios.get(`/discussions/${discussionFile._id}`, authConfig);
+      setDiscussionComments(res.data || []);
+      setDiscussionInput("");
+    } catch (error) {
+      console.error("Failed to post discussion comment", error);
     }
   };
 
@@ -140,6 +172,7 @@ function MyFiles() {
               <th className="p-3 text-left">Download Count</th>
               <th className="p-3 text-center">View</th>
               <th className="p-3 text-center">Download</th>
+              <th className="p-3 text-center">Discussion</th>
             </tr>
           </thead>
           <tbody>
@@ -185,11 +218,20 @@ function MyFiles() {
                       <Download size={18} />
                     </button>
                   </td>
+                  <td className="p-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => openDiscussion(file)}
+                      className="text-[#4F7C82] hover:text-[#0B2E33]"
+                    >
+                      <MessageSquare size={18} />
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={11} className="p-6 text-center text-slate-500">
+                <td colSpan={12} className="p-6 text-center text-slate-500">
                   No files found. Try a different filter.
                 </td>
               </tr>
@@ -199,6 +241,61 @@ function MyFiles() {
       </div>
 
       <Pagination currentPage={safeCurrentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+
+      {discussionOpen && discussionFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl rounded-xl border bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b p-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Discussion</h3>
+                <p className="text-xs text-slate-500">{discussionFile.fileName}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDiscussionOpen(false)}
+                className="rounded border p-1 hover:bg-slate-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="max-h-72 space-y-2 overflow-y-auto p-4">
+              {discussionComments.length > 0 ? (
+                discussionComments.map((comment) => (
+                  <div key={comment._id} className="rounded border px-3 py-2">
+                    <p className="text-xs font-semibold text-slate-800">
+                      {comment.user?.name || "User"} ({comment.user?.role || comment.role})
+                    </p>
+                    <p className="mt-1 text-sm text-slate-700">{comment.message}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {new Date(comment.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">No comments yet.</p>
+              )}
+            </div>
+            <div className="border-t p-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={discussionInput}
+                  onChange={(event) => setDiscussionInput(event.target.value)}
+                  placeholder="Reply to student doubts..."
+                  className="h-10 w-full rounded border px-3 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={postDiscussionComment}
+                  className="h-10 rounded bg-[#0B2E33] px-4 text-sm text-white"
+                >
+                  Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
