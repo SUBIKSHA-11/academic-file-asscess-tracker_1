@@ -1,11 +1,14 @@
 require("dotenv").config();
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const connectDB = require("./config/db");
 
 const app = express();
+const port = process.env.PORT || 5000;
+const frontendDistPath = path.join(__dirname, "academic-frontend", "dist");
 
 connectDB();
 
@@ -35,9 +38,19 @@ app.use("/api/discussions", require("./routes/fileDiscussionRoutes"));
 app.use("/api", require("./routes/departmentRoutes"));
 //app.use("/api/admin", require("./routes/departmentRoutes"));
 
-app.listen(process.env.PORT, () =>
-  console.log(`Server running on port ${process.env.PORT}`)
-);
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(frontendDistPath));
+
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
+      return next();
+    }
+
+    return res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+}
+
+app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
 
