@@ -94,7 +94,7 @@ const handleView = async (id) => {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">
+      <h2 className="mb-6 text-2xl font-semibold">
         Academic Files
       </h2>
 
@@ -103,7 +103,7 @@ const handleView = async (id) => {
         <div className="mb-6">
           <button
             onClick={() => navigate("/upload")}
-            className="flex items-center gap-2 bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded-lg shadow-md hover:bg-[#5B6D49] transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0C3C01] px-4 py-2 text-[#F1F2ED] shadow-md transition-colors hover:bg-[#5B6D49] sm:w-auto"
           >
             <Upload size={18} />
             Upload File
@@ -130,10 +130,10 @@ const handleView = async (id) => {
           />
         </div>
 
-        <div className="flex h-10 items-center gap-3 rounded-lg border border-slate-300 bg-white px-3">
+        <div className="flex h-10 w-full items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 sm:w-auto">
           <Filter size={18} className="text-gray-400" />
           <select
-            className="bg-transparent text-sm outline-none"
+            className="w-full bg-transparent text-sm outline-none"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -149,8 +149,8 @@ const handleView = async (id) => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-[#DFD9D8] bg-white shadow-md">
+        <table className="min-w-[980px] w-full text-sm">
           <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">File</th>
@@ -191,7 +191,8 @@ const handleView = async (id) => {
                 <td className="p-3">{file.uploadedBy?.name}</td>
                 <td className="p-3">{file.downloadCount}</td>
 
-                <td className="p-3 flex justify-center gap-3">
+                <td className="p-3">
+                  <div className="flex items-center justify-center gap-3">
 
                   {/* VIEW - ALL ROLES */}
           <button
@@ -221,7 +222,7 @@ const handleView = async (id) => {
                       <Trash2 size={18} />
                     </button>
                   )}
-
+                  </div>
                 </td>
               </tr>
             )) : (

@@ -47,7 +47,7 @@ const toggleDepartment = async (id) => {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">
+      <h2 className="mb-6 text-2xl font-semibold">
         Department Management
       </h2>
 
@@ -61,20 +61,20 @@ const toggleDepartment = async (id) => {
           onChange={(e) => setName(e.target.value)}
           placeholder="Department Name"
           required
-          className="h-10 w-64 rounded-lg border border-slate-300 px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm sm:w-64"
         />
 
         <button
           type="submit"
-          className="bg-[#0C3C01] text-[#F1F2ED] px-4 py-2 rounded hover:bg-[#0C3C01] transition-colors"
+          className="flex w-full items-center justify-center rounded bg-[#0C3C01] px-4 py-2 text-[#F1F2ED] transition-colors hover:bg-[#0C3C01] sm:w-auto"
         >
           <Plus size={16} />
         </button>
       </form>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-[#DFD9D8] bg-white shadow-md">
+        <table className="min-w-[720px] w-full text-sm">
           <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">Department</th>

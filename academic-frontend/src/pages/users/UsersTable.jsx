@@ -71,14 +71,14 @@ const [departments, setDepartments] = useState([]);
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-semibold">
           {role} List
         </h2>
 
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-lg bg-[#0C3C01] px-4 py-2 text-[#F1F2ED] transition-colors hover:bg-[#163914]"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0C3C01] px-4 py-2 text-[#F1F2ED] transition-colors hover:bg-[#163914] sm:w-auto"
         >
           <Plus size={18} />
           Add {role}
@@ -176,8 +176,8 @@ const [departments, setDepartments] = useState([]);
       )}
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-[#DFD9D8] bg-white shadow-md">
+        <table className="min-w-[840px] w-full text-sm">
           <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">Name</th>

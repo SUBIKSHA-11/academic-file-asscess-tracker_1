@@ -75,7 +75,7 @@ function Suspicious() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-6">
+      <h2 className="mb-6 text-2xl font-semibold">
         Suspicious Activity
       </h2>
 
@@ -83,7 +83,7 @@ function Suspicious() {
       <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
 
         {/* Search */}
-        <div className="flex h-10 min-w-[260px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-3">
+        <div className="flex h-10 w-full items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 sm:min-w-[260px] sm:flex-1 md:flex-none">
           <Search size={18} />
           <input
             type="text"
@@ -104,7 +104,7 @@ function Suspicious() {
             setSeverity(e.target.value);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:w-auto"
         >
           <option value="">All Severity</option>
           <option value="HIGH">HIGH</option>
@@ -120,7 +120,7 @@ function Suspicious() {
             setFromDate(e.target.value);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:w-auto"
         />
 
         <input
@@ -130,14 +130,14 @@ function Suspicious() {
             setToDate(e.target.value);
             setCurrentPage(1);
           }}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
+          className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:w-auto"
         />
 
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-[#DFD9D8] bg-white shadow-md">
+        <table className="min-w-[860px] w-full text-sm">
           <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">User</th>
@@ -188,7 +188,8 @@ function Suspicious() {
                   {new Date(alert.createdAt).toLocaleString()}
                 </td>
 
-                <td className="p-3 flex justify-center gap-4">
+                <td className="p-3">
+                  <div className="flex justify-center gap-4">
 
                   {!alert.reviewed ? (
                     <button
@@ -215,7 +216,7 @@ function Suspicious() {
                   >
                     <Trash2 size={18} />
                   </button>
-
+                  </div>
                 </td>
 
               </tr>

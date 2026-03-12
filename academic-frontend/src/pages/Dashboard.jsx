@@ -145,7 +145,7 @@ function Dashboard() {
 
   return (
     <div>
-      <div className="mb-5 flex gap-2">
+      <div className="mb-5 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setActiveTab("overview")}
@@ -201,7 +201,7 @@ function Dashboard() {
                 Category Distribution
               </h3>
               <div className="flex justify-center">
-                <div className="w-64 h-64">
+                <div className="h-64 w-full max-w-[16rem]">
                   <Doughnut data={categoryChart} options={{ responsive: true, maintainAspectRatio: false }} />
                 </div>
               </div>
@@ -213,7 +213,7 @@ function Dashboard() {
                 Department Distribution
               </h3>
               <div className="flex justify-center">
-                <div className="w-64 h-64">
+                <div className="h-64 w-full max-w-[16rem]">
                   <Pie
                     data={{
                       labels: departmentData.map((d) => d._id?.name || d._id),
@@ -235,7 +235,7 @@ function Dashboard() {
             <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
               <h3 className="mb-4 font-semibold">Most Downloaded Files</h3>
               <div className="overflow-x-auto">
-                <div className="min-w-[700px] h-72">
+                <div className="h-72 min-w-[560px] sm:min-w-[700px]">
                   <Bar data={topFilesChart} options={{ plugins: { legend: { display: false } } }} />
                 </div>
               </div>
@@ -244,7 +244,7 @@ function Dashboard() {
             <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
               <h3 className="mb-4 font-semibold">Monthly Upload Trend</h3>
               <div className="overflow-x-auto">
-                <div className="min-w-[700px] h-72">
+                <div className="h-72 min-w-[560px] sm:min-w-[700px]">
                   <Bar data={monthlyChart} options={{ plugins: { legend: { display: false } } }} />
                 </div>
               </div>
@@ -253,7 +253,7 @@ function Dashboard() {
             <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8] lg:col-span-2">
               <h3 className="mb-4 font-semibold">Recent Activity</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="min-w-[700px] w-full text-sm">
                   <thead className="bg-[#0C3C01] text-[#F1F2ED] sticky top-0">
                     <tr>
                       <th className="p-2 text-left">User</th>
@@ -293,7 +293,7 @@ function Dashboard() {
           <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
             <h3 className="mb-4 font-semibold">Most Rated Files (Top 10)</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="min-w-[760px] w-full text-sm">
                 <thead className="bg-[#0C3C01] text-[#F1F2ED] sticky top-0">
                   <tr>
                     <th className="p-3 text-left">File</th>
@@ -337,7 +337,7 @@ function Dashboard() {
           <div className="bg-white p-6 rounded-xl shadow-md border border-[#DFD9D8]">
             <h3 className="mb-4 font-semibold">Best Rated Faculty</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="min-w-[680px] w-full text-sm">
                 <thead className="bg-[#0C3C01] text-[#F1F2ED] sticky top-0">
                   <tr>
                     <th className="p-3 text-left">Faculty</th>

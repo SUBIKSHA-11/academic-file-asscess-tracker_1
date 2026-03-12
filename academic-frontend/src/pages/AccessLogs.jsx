@@ -42,29 +42,31 @@ function AccessLogs() {
   return (
     <div>
 
-      <h2 className="text-2xl font-semibold mb-6">
+      <h2 className="mb-6 text-2xl font-semibold">
         Access Logs
       </h2>
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
 
-        <select
-          value={action}
-          onChange={(e) => {
-            setCurrentPage(1);
-            setAction(e.target.value);
-          }}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
-        >
-          <option value="ALL">All Actions</option>
-          <option value="UPLOAD">UPLOAD</option>
-          <option value="DOWNLOAD">DOWNLOAD</option>
-          <option value="VIEW">VIEW</option>
-          <option value="DELETE">DELETE</option>
-        </select>
+        <div className="w-full sm:w-auto">
+          <select
+            value={action}
+            onChange={(e) => {
+              setCurrentPage(1);
+              setAction(e.target.value);
+            }}
+            className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm sm:min-w-[170px]"
+          >
+            <option value="ALL">All Actions</option>
+            <option value="UPLOAD">UPLOAD</option>
+            <option value="DOWNLOAD">DOWNLOAD</option>
+            <option value="VIEW">VIEW</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+        </div>
 
-        <div className="flex min-w-[170px] flex-col">
+        <div className="flex w-full flex-col sm:min-w-[170px] sm:flex-1 md:flex-none">
   <label className="text-sm mb-1">From Date</label>
   <input
     type="date"
@@ -77,7 +79,7 @@ function AccessLogs() {
   />
 </div>
 
-<div className="flex min-w-[170px] flex-col">
+        <div className="flex w-full flex-col sm:min-w-[170px] sm:flex-1 md:flex-none">
   <label className="text-sm mb-1">To Date</label>
   <input
     type="date"
@@ -94,8 +96,8 @@ function AccessLogs() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md border border-[#DFD9D8] overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-[#DFD9D8] bg-white shadow-md">
+        <table className="min-w-[760px] w-full text-sm">
           <thead className="sticky top-0 bg-[#0C3C01] text-[#F1F2ED]">
             <tr>
               <th className="p-3 text-left">User</th>

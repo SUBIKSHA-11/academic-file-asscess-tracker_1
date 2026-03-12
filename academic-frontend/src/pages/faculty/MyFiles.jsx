@@ -137,14 +137,14 @@ function MyFiles() {
           />
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex w-full gap-3 md:w-auto">
           <select
             value={category}
             onChange={(e) => {
               setCategory(e.target.value);
               setCurrentPage(1);
             }}
-            className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"
+            className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm md:w-auto"
           >
             <option value="">All Categories</option>
             <option value="NOTES">NOTES</option>
@@ -157,7 +157,7 @@ function MyFiles() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+      <div className="overflow-x-auto rounded-xl border border-slate-100 bg-white shadow-sm">
         <table className="w-full text-sm min-w-[980px]">
           <thead className="sticky top-0 bg-slate-50">
             <tr>
@@ -276,7 +276,7 @@ function MyFiles() {
               )}
             </div>
             <div className="border-t p-4">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   type="text"
                   value={discussionInput}
