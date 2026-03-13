@@ -287,23 +287,23 @@ function StudentDashboard() {
           <h3 className="font-semibold text-slate-800">My Recent Access Records</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-[720px] text-sm">
             <thead className="bg-slate-50 sticky top-0">
               <tr>
                 <th className="p-3 text-left">File</th>
-                <th className="p-3 text-left">Action</th>
+                <th className="whitespace-nowrap p-3 text-left">Action</th>
                 <th className="p-3 text-left">Subject</th>
-                <th className="p-3 text-left">Time</th>
+                <th className="whitespace-nowrap p-3 text-left">Time</th>
               </tr>
             </thead>
             <tbody>
               {paginatedRecentAccess.length > 0 ? (
                 paginatedRecentAccess.map((log, index) => (
                   <tr key={log._id} className={`border-t ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
-                    <td className="p-3">{log.file?.fileName || "-"}</td>
-                    <td className="p-3">{log.action}</td>
-                    <td className="p-3">{log.file?.subject || "-"}</td>
-                    <td className="p-3">{new Date(log.createdAt).toLocaleString()}</td>
+                    <td className="min-w-[260px] p-3">{log.file?.fileName || "-"}</td>
+                    <td className="whitespace-nowrap p-3">{log.action}</td>
+                    <td className="min-w-[180px] p-3">{log.file?.subject || "-"}</td>
+                    <td className="whitespace-nowrap p-3">{new Date(log.createdAt).toLocaleString()}</td>
                   </tr>
                 ))
               ) : (

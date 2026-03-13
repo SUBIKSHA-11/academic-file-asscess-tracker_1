@@ -83,15 +83,15 @@ function FacultyAccessLogs() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto overflow-y-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="min-w-[760px] text-sm">
           <thead className="sticky top-0 bg-[#0B2E33] text-white">
             <tr>
-              <th className="p-3 text-left">User</th>
-              <th className="p-3 text-left">Role</th>
-              <th className="p-3 text-left">Action</th>
+              <th className="whitespace-nowrap p-3 text-left">User</th>
+              <th className="whitespace-nowrap p-3 text-left">Role</th>
+              <th className="whitespace-nowrap p-3 text-left">Action</th>
               <th className="p-3 text-left">File</th>
-              <th className="p-3 text-left">Time</th>
+              <th className="whitespace-nowrap p-3 text-left">Time</th>
             </tr>
           </thead>
           <tbody>
@@ -101,11 +101,11 @@ function FacultyAccessLogs() {
                   key={log._id}
                   className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-slate-50`}
                 >
-                  <td className="p-3">{log.user?.name || "-"}</td>
-                  <td className="p-3">{log.user?.role || "-"}</td>
-                  <td className="p-3 font-semibold">{log.action}</td>
-                  <td className="p-3">{log.file?.fileName || "-"}</td>
-                  <td className="p-3">{new Date(log.createdAt).toLocaleString()}</td>
+                  <td className="whitespace-nowrap p-3">{log.user?.name || "-"}</td>
+                  <td className="whitespace-nowrap p-3">{log.user?.role || "-"}</td>
+                  <td className="whitespace-nowrap p-3 font-semibold">{log.action}</td>
+                  <td className="min-w-[220px] p-3">{log.file?.fileName || "-"}</td>
+                  <td className="whitespace-nowrap p-3">{new Date(log.createdAt).toLocaleString()}</td>
                 </tr>
               ))
             ) : (

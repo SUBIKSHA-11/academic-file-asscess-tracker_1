@@ -888,8 +888,8 @@ function StudentBrowseFiles() {
                                   key={file._id}
                                   className="border rounded-lg p-3 hover:bg-gray-50 transition"
                                 >
-                              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                <div>
+                              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                <div className="min-w-0 flex-1">
                                   <p className="font-medium text-gray-800 break-words">{file.fileName}</p>
                                   <p className="text-xs text-gray-500 mt-1">
                                     {file.subject} • {new Date(file.createdAt).toLocaleDateString()}
@@ -900,73 +900,78 @@ function StudentBrowseFiles() {
                                   </p>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-xs px-2 py-1 rounded-full ${chipClass}`}>
-                                    {cat.label}
-                                  </span>
-                                  <span className="text-xs bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
-                                    {file.downloadCount || 0} downloads
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleBookmark(file._id)}
-                                    className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded border ${
-                                      file.isBookmarked ? "bg-yellow-100 border-yellow-300" : "hover:bg-gray-100"
-                                    }`}
-                                  >
-                                    <Star size={14} /> {file.isBookmarked ? "Starred" : "Star"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSaveToFolder(file._id)}
-                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
-                                  >
-                                    <FolderPlus size={14} /> Save Folder
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenFeedback(file._id)}
-                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
-                                  >
-                                    Rate
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleDiscussion(file._id)}
-                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
-                                  >
-                                    <MessageSquare size={14} />
-                                    Discussion
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleView(file._id)}
-                                    disabled={!file.canAccess}
-                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
-                                  >
-                                    <Eye size={14} /> View
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDownload(file._id, file.fileName)}
-                                    disabled={!file.canAccess}
-                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border hover:bg-gray-100"
-                                  >
-                                    <Download size={14} /> Download
-                                  </button>
-                                  {!file.canAccess && (
+                                <div className="flex flex-col gap-3 md:max-w-[48%] md:items-end">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className={`text-xs px-2 py-1 rounded-full ${chipClass}`}>
+                                      {cat.label}
+                                    </span>
+                                    <span className="text-xs bg-[#DFD9D8] text-[#64242F] px-2 py-1 rounded-full">
+                                      {file.downloadCount || 0} downloads
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:flex md:flex-wrap md:justify-end">
                                     <button
                                       type="button"
-                                      onClick={() => handleRequestAccess(file._id)}
-                                      className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#64242F] text-[#64242F] hover:bg-[#DFD9D8]"
+                                      onClick={() => handleBookmark(file._id)}
+                                      className={`inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border ${
+                                        file.isBookmarked ? "bg-yellow-100 border-yellow-300" : "hover:bg-gray-100"
+                                      }`}
                                     >
-                                      Request Access
+                                      <Star size={14} /> {file.isBookmarked ? "Starred" : "Star"}
                                     </button>
-                                  )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveToFolder(file._id)}
+                                      className="inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border hover:bg-gray-100"
+                                    >
+                                      <FolderPlus size={14} /> Save
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenFeedback(file._id)}
+                                      className="inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border hover:bg-gray-100"
+                                    >
+                                      Rate
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleDiscussion(file._id)}
+                                      className="inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border hover:bg-gray-100"
+                                    >
+                                      <MessageSquare size={14} />
+                                      Chat
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleView(file._id)}
+                                      disabled={!file.canAccess}
+                                      className="inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border hover:bg-gray-100 disabled:opacity-50"
+                                    >
+                                      <Eye size={14} /> View
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDownload(file._id, file.fileName)}
+                                      disabled={!file.canAccess}
+                                      className="inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border hover:bg-gray-100 disabled:opacity-50"
+                                    >
+                                      <Download size={14} /> Download
+                                    </button>
+                                    {!file.canAccess && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRequestAccess(file._id)}
+                                        className="col-span-2 inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border border-[#64242F] text-[#64242F] hover:bg-[#DFD9D8] sm:col-span-3 md:col-auto"
+                                      >
+                                        Request Access
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 
-                              <div className="mt-2 flex flex-wrap items-center gap-2 rounded border bg-slate-50 px-2 py-2">
+                              <div className="mt-2 grid gap-2 rounded border bg-slate-50 px-2 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
                                 <input
                                   type="datetime-local"
                                   value={planDraftByFile[file._id]?.reminderAt || ""}
@@ -979,7 +984,7 @@ function StudentBrowseFiles() {
                                       }
                                     }))
                                   }
-                                  className="h-8 rounded border px-2 text-xs"
+                                  className="h-9 w-full rounded border px-2 text-xs"
                                 />
                                 <input
                                   type="text"
@@ -994,15 +999,15 @@ function StudentBrowseFiles() {
                                     }))
                                   }
                                   placeholder="Study note"
-                                  className="h-8 rounded border px-2 text-xs"
+                                  className="h-9 w-full rounded border px-2 text-xs"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => handleAddToStudyPlan(file._id)}
-                                  className="inline-flex h-8 items-center gap-1 rounded border px-2 text-xs hover:bg-white"
+                                  className="inline-flex h-9 items-center justify-center gap-1 rounded border px-3 text-xs hover:bg-white"
                                 >
                                   <CalendarPlus size={12} />
-                                  Add to Study Plan
+                                  Add Plan
                                 </button>
                               </div>
 
@@ -1026,7 +1031,7 @@ function StudentBrowseFiles() {
                                       <p className="text-xs text-slate-500">No comments yet. Ask your doubt here.</p>
                                     )}
                                   </div>
-                                  <div className="mt-2 flex items-center gap-2">
+                                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                                     <input
                                       type="text"
                                       value={discussionInputByFile[file._id] || ""}
@@ -1037,12 +1042,12 @@ function StudentBrowseFiles() {
                                         }))
                                       }
                                       placeholder="Ask doubt / reply..."
-                                      className="h-8 w-full rounded border px-2 text-xs"
+                                      className="h-9 w-full rounded border px-2 text-xs"
                                     />
                                     <button
                                       type="button"
                                       onClick={() => handleAddDiscussionComment(file._id)}
-                                      className="h-8 rounded bg-[#64242F] px-3 text-xs text-white"
+                                      className="h-9 rounded bg-[#64242F] px-3 text-xs text-white"
                                     >
                                       Post
                                     </button>
@@ -1053,7 +1058,7 @@ function StudentBrowseFiles() {
                               {activeFeedbackFileId === file._id && (
                                 <div className="mt-3 rounded-lg border bg-white p-3">
                                   <p className="text-xs font-semibold text-slate-700 mb-2">Your Feedback</p>
-                                  <div className="flex items-center gap-2 mb-2">
+                                  <div className="mb-2 flex flex-wrap items-center gap-2">
                                     {[1, 2, 3, 4, 5].map((value) => (
                                       <button
                                         key={value}
@@ -1069,7 +1074,7 @@ function StudentBrowseFiles() {
                                       </button>
                                     ))}
                                   </div>
-                                  <div className="flex items-center gap-2 mb-2">
+                                  <div className="mb-2 flex flex-wrap items-center gap-2">
                                     <button
                                       type="button"
                                       onClick={() => setFeedbackForm((prev) => ({ ...prev, isHelpful: true }))}
@@ -1102,7 +1107,7 @@ function StudentBrowseFiles() {
                                     placeholder="Optional comment"
                                     className="w-full rounded border px-2 py-1 text-xs"
                                   />
-                                  <div className="mt-2 flex items-center gap-2">
+                                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                                     <button
                                       type="button"
                                       onClick={() => handleSubmitFeedback(file._id)}
