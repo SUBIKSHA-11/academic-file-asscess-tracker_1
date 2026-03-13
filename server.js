@@ -37,11 +37,10 @@ app.use("/api/file", require("./routes/fileRatingRoutes"));
 app.use("/api/discussions", require("./routes/fileDiscussionRoutes"));
 app.use("/api", require("./routes/departmentRoutes"));
 //app.use("/api/admin", require("./routes/departmentRoutes"));
-
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(frontendDistPath));
 
-  app.get("*", (req, res, next) => {
+  app.get("/*", (req, res, next) => {
     if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
       return next();
     }
