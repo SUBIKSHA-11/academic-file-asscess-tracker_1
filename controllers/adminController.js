@@ -589,6 +589,41 @@ const getFileStorageHealth = async (req, res) => {
   }
 };
 
+const getFileStorageRecord = async (req, res) => {
+  try {
+    const file = await AcademicFile.findById(req.params.id)
+      .select("fileName filePath status category sensitivity createdAt updatedAt")
+      .populate("uploadedBy", "name role")
+      .lean();
+
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    const storageType = isRemoteFilePath(file.filePath)
+      ? "remote"
+      : isLikelyLocalFilePath(file.filePath)
+        ? "local"
+        : "unknown";
+
+    return res.json({
+      _id: file._id,
+      fileName: file.fileName,
+      filePath: file.filePath,
+      status: file.status,
+      category: file.category,
+      sensitivity: file.sensitivity,
+      storageType,
+      uploadedBy: file.uploadedBy || null,
+      createdAt: file.createdAt,
+      updatedAt: file.updatedAt
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to inspect file record" });
+  }
+};
+
 
 
 module.exports = {
@@ -613,7 +648,8 @@ getMostActiveDepartment,
 getDepartments,
 addDepartment,
 getFileAnalytics,
-getFileStorageHealth
+getFileStorageHealth,
+getFileStorageRecord
 
 };
 

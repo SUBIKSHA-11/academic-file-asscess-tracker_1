@@ -60,7 +60,9 @@ function Upload() {
         formData.append(key, form[key]);
       });
 
-      await axios.post("/files/upload", formData);
+      await axios.post("/files/upload", formData, {
+        timeout: 120000
+      });
 
       setMessage("File uploaded successfully!");
       setFile(null);

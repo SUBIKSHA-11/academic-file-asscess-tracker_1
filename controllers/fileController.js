@@ -285,23 +285,49 @@ const fetchRemoteFileBuffer = async (file) => {
 
 const sendFileResponse = async (res, file, disposition = "inline") => {
   if (isRemotePath(file.filePath)) {
-    const remoteResponse = await fetchRemoteFileBuffer(file);
-    const upstreamType = remoteResponse.headers?.["content-type"];
-    const upstreamLength = remoteResponse.headers?.["content-length"];
+    try {
+      const remoteResponse = await fetchRemoteFileBuffer(file);
+      const upstreamType = remoteResponse.headers?.["content-type"];
+      const upstreamLength = remoteResponse.headers?.["content-length"];
 
-    res.setHeader(
-      "Content-Type",
-      resolveContentType(file.fileName, upstreamType || "application/octet-stream")
-    );
-    if (upstreamLength) {
-      res.setHeader("Content-Length", upstreamLength);
+      res.setHeader(
+        "Content-Type",
+        resolveContentType(file.fileName, upstreamType || "application/octet-stream")
+      );
+      if (upstreamLength) {
+        res.setHeader("Content-Length", upstreamLength);
+      }
+      res.setHeader(
+        "Content-Disposition",
+        `${disposition}; filename="${encodeURIComponent(file.fileName)}"`
+      );
+
+      return res.send(Buffer.from(remoteResponse.data));
+    } catch (error) {
+      const status = Number(error?.response?.status) || 500;
+      const remoteMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch remote file";
+
+      console.error("Remote file fetch failed:", {
+        fileId: String(file._id || ""),
+        fileName: file.fileName,
+        filePath: file.filePath,
+        status,
+        message: remoteMessage
+      });
+
+      if (status === 401 || status === 403) {
+        return res.status(502).json({ message: "Remote file access failed" });
+      }
+
+      if (status === 404) {
+        return res.status(404).json({ message: "Stored file not found" });
+      }
+
+      return res.status(500).json({ message: "Failed to fetch stored file" });
     }
-    res.setHeader(
-      "Content-Disposition",
-      `${disposition}; filename="${encodeURIComponent(file.fileName)}"`
-    );
-
-    return res.send(Buffer.from(remoteResponse.data));
   }
 
   const localPath = resolveLocalFilePath(file.filePath);
@@ -421,7 +447,9 @@ const downloadFile = async (req, res) => {
 
   } catch (err) {
     console.error("Download failed:", err?.response?.data || err?.message || err);
-    res.status(500).json({ message: "Download failed" });
+    res.status(err?.status || 500).json({
+      message: err?.response?.data?.message || err?.message || "Download failed"
+    });
   }
 };
 
@@ -457,7 +485,9 @@ const viewFile = async (req, res) => {
 
   } catch (err) {
     console.error("View failed:", err?.response?.data || err?.message || err);
-    res.status(500).json({ message: "View failed" });
+    res.status(err?.status || 500).json({
+      message: err?.response?.data?.message || err?.message || "View failed"
+    });
   }
 };
 

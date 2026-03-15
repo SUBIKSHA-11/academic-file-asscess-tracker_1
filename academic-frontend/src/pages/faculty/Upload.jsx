@@ -64,7 +64,10 @@ function FacultyUpload() {
       formData.append("category", form.category);
       formData.append("sensitivity", form.sensitivity);
 
-      const res = await axios.post("/files/upload", formData, authConfig);
+      const res = await axios.post("/files/upload", formData, {
+        ...authConfig,
+        timeout: 120000
+      });
       const uploadedStatus = res?.data?.file?.status || "PENDING";
       setMessage(
         uploadedStatus === "APPROVED"
