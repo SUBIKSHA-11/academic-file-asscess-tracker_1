@@ -24,6 +24,7 @@ router.patch("/users/:id/role", adminController.updateUserRole);
 router.delete("/users/:id", adminController.deleteUser);
 router.get("/downloads-today", adminController.getDownloadsToday);
 router.get("/file-analytics", adminController.getFileAnalytics);
+router.get("/file-storage-health", adminController.getFileStorageHealth);
 router.delete("/alerts/:id", adminController.deleteAlert);
 router.patch("/alerts/:id/review", adminController.markAlertReviewed);
 router.patch("/alerts/:id/reopen", adminController.reopenAlert);

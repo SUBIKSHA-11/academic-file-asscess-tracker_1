@@ -11,7 +11,7 @@ function ProtectedRoute({ children }) {
   if (storedUser) {
     try {
       parsedStoredUser = JSON.parse(storedUser);
-    } catch (error) {
+    } catch {
       parsedStoredUser = null;
     }
   }

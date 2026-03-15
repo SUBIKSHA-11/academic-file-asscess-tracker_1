@@ -8,6 +8,7 @@ const User = require("../models/User");
 const mongoose = require("mongoose");
 const StudyFolder = require("../models/StudyFolder");
 const StudyPlanItem = require("../models/StudyPlanItem");
+const { isFileAvailable } = require("../utils/fileAvailability");
 const normalizeSensitivity = (value) => {
   const normalized = String(value || "PUBLIC").trim().toUpperCase();
   if (["PUBLIC", "INTERNAL", "CONFIDENTIAL"].includes(normalized)) {
@@ -35,7 +36,7 @@ const getStudentFiles = async (req, res) => {
         { $or: [{ status: "APPROVED" }, { status: { $exists: false } }] }
       ]
     })
-      .select("fileName semester category department subject downloadCount createdAt sensitivity avgRating totalRatings helpfulPercentage")
+      .select("fileName filePath semester category department subject downloadCount createdAt sensitivity avgRating totalRatings helpfulPercentage")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -49,27 +50,33 @@ const getStudentFiles = async (req, res) => {
       return acc;
     }, {});
 
-    const normalized = files.map((file) => ({
-      _id: file._id,
-      fileName: file.fileName,
-      semester: file.semester,
-      category: file.category,
-      department: departmentMap[file.department] || {
-        _id: null,
-        name: file.department || "Unknown Department"
-      },
-      subject: file.subject,
-      downloadCount: file.downloadCount || 0,
-      avgRating: file.avgRating || 0,
-      totalRatings: file.totalRatings || 0,
-      helpfulPercentage: file.helpfulPercentage || 0,
-      createdAt: file.createdAt,
-      sensitivity: normalizeSensitivity(file.sensitivity),
-      canAccess: normalizeSensitivity(file.sensitivity) === "PUBLIC" || tempAccessIds.has(String(file._id)),
-      isBookmarked: bookmarkedIds.has(String(file._id))
-    }));
+    const normalized = files.map((file) => {
+      const available = isFileAvailable(file.filePath);
+      return {
+        _id: file._id,
+        fileName: file.fileName,
+        semester: file.semester,
+        category: file.category,
+        department: departmentMap[file.department] || {
+          _id: null,
+          name: file.department || "Unknown Department"
+        },
+        subject: file.subject,
+        downloadCount: file.downloadCount || 0,
+        avgRating: file.avgRating || 0,
+        totalRatings: file.totalRatings || 0,
+        helpfulPercentage: file.helpfulPercentage || 0,
+        createdAt: file.createdAt,
+        sensitivity: normalizeSensitivity(file.sensitivity),
+        canAccess:
+          available &&
+          (normalizeSensitivity(file.sensitivity) === "PUBLIC" || tempAccessIds.has(String(file._id))),
+        isAvailable: available,
+        isBookmarked: bookmarkedIds.has(String(file._id))
+      };
+    });
 
-    res.json(normalized);
+    res.json(normalized.filter((file) => file.isAvailable));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch student files" });
@@ -206,7 +213,7 @@ const getBookmarkedFiles = async (req, res) => {
     const bookmarks = await FileBookmark.find({ user: req.user.userId })
       .populate({
         path: "file",
-        select: "fileName subject semester category department sensitivity status createdAt latestVersion",
+        select: "fileName filePath subject semester category department sensitivity status createdAt latestVersion",
         match: {
           $or: [{ latestVersion: true }, { latestVersion: { $exists: false } }]
         }
@@ -216,16 +223,23 @@ const getBookmarkedFiles = async (req, res) => {
 
     const data = bookmarks
       .filter((item) => item.file)
-      .map((item) => ({
-        ...item.file,
-        sensitivity: normalizeSensitivity(item.file.sensitivity),
-        canAccess:
-          normalizeSensitivity(item.file.sensitivity) === "PUBLIC" ||
-          tempAccessIds.has(String(item.file._id)),
-        isBookmarked: true,
-        bookmarkedAt: item.createdAt
-      }));
-    res.json(data);
+      .map((item) => {
+        const available = isFileAvailable(item.file.filePath);
+        return {
+          ...item.file,
+          sensitivity: normalizeSensitivity(item.file.sensitivity),
+          canAccess:
+            available &&
+            (
+              normalizeSensitivity(item.file.sensitivity) === "PUBLIC" ||
+              tempAccessIds.has(String(item.file._id))
+            ),
+          isAvailable: available,
+          isBookmarked: true,
+          bookmarkedAt: item.createdAt
+        };
+      });
+    res.json(data.filter((file) => file.isAvailable));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch bookmarks" });
@@ -280,7 +294,7 @@ const getRecentFiles = async (req, res) => {
       user: req.user.userId,
       action: { $in: ["VIEW", "DOWNLOAD"] }
     })
-      .populate("file", "fileName subject semester category department sensitivity status latestVersion")
+      .populate("file", "fileName filePath subject semester category department sensitivity status latestVersion")
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
@@ -294,17 +308,19 @@ const getRecentFiles = async (req, res) => {
       if (seen.has(fileId)) continue;
       seen.add(fileId);
       const sensitivity = normalizeSensitivity(log.file.sensitivity);
+      const available = isFileAvailable(log.file.filePath);
       recent.push({
         ...log.file,
         sensitivity,
-        canAccess: sensitivity === "PUBLIC" || tempAccessIds.has(fileId),
+        canAccess: available && (sensitivity === "PUBLIC" || tempAccessIds.has(fileId)),
+        isAvailable: available,
         lastAction: log.action,
         lastAccessedAt: log.createdAt
       });
       if (recent.length >= 10) break;
     }
 
-    res.json(recent);
+    res.json(recent.filter((file) => file.isAvailable));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch recent files" });

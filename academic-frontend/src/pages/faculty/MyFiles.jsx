@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
 import { Search, Eye, Download, MessageSquare, X } from "lucide-react";
 import Pagination from "../../components/Pagination";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { openFilePreview } from "../../utils/filePreview";
 
 function MyFiles() {
   const [files, setFiles] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [actionMessage, setActionMessage] = useState("");
   const [discussionOpen, setDiscussionOpen] = useState(false);
   const [discussionFile, setDiscussionFile] = useState(null);
   const [discussionComments, setDiscussionComments] = useState([]);
@@ -37,15 +40,37 @@ function MyFiles() {
     void fetchMyFiles();
   }, [fetchMyFiles]);
 
-  const handleView = async (id) => {
+  const getAuthConfig = () => {
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      throw new Error("Session expired. Please login again.");
+    }
+
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    };
+  };
+
+  const handleView = async (id, fileName) => {
+    const previewWindow = window.open("about:blank", "_blank");
     try {
       const res = await axios.get(`/files/view/${id}`, {
-        ...authConfig,
+        ...getAuthConfig(),
         responseType: "blob"
       });
-      const fileURL = window.URL.createObjectURL(res.data);
-      window.open(fileURL, "_blank", "noopener,noreferrer");
+      const result = openFilePreview({
+        blob: res.data,
+        fileName,
+        previewWindow
+      });
+      setActionMessage(result.message);
     } catch (error) {
+      if (previewWindow) {
+        previewWindow.close();
+      }
+      setActionMessage(await getApiErrorMessage(error, "Unable to open this file"));
       console.error("View failed", error);
     }
   };
@@ -53,7 +78,7 @@ function MyFiles() {
   const handleDownload = async (id, fileName) => {
     try {
       const res = await axios.get(`/files/download/${id}`, {
-        ...authConfig,
+        ...getAuthConfig(),
         responseType: "blob"
       });
       const url = window.URL.createObjectURL(res.data);
@@ -68,6 +93,7 @@ function MyFiles() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
+      setActionMessage(await getApiErrorMessage(error, "Unable to download this file"));
       console.error("Download failed", error);
     }
   };
@@ -101,7 +127,7 @@ function MyFiles() {
   };
 
   const filteredFiles = files.filter((file) => {
-    const bySearch = file.fileName.toLowerCase().includes(search.toLowerCase());
+    const bySearch = (file.fileName || "").toLowerCase().includes(search.toLowerCase());
     const byCategory = category ? file.category === category : true;
     return bySearch && byCategory;
   });
@@ -121,6 +147,12 @@ function MyFiles() {
           Uploaded files stay pending until admin approves and publishes them for students.
         </p>
       </div>
+
+      {actionMessage && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {actionMessage}
+        </div>
+      )}
 
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 md:flex-row md:items-end md:justify-between">
         <div className="flex h-10 w-full items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 md:max-w-sm">
@@ -203,8 +235,9 @@ function MyFiles() {
                   <td className="p-3 text-center">
                     <button
                       type="button"
-                      onClick={() => handleView(file._id)}
-                      className="text-[#4F7C82] hover:text-[#0B2E33]"
+                      onClick={() => handleView(file._id, file.fileName)}
+                      disabled={file.isAvailable === false}
+                      className="text-[#4F7C82] hover:text-[#0B2E33] disabled:opacity-40"
                     >
                       <Eye size={18} />
                     </button>
@@ -213,7 +246,8 @@ function MyFiles() {
                     <button
                       type="button"
                       onClick={() => handleDownload(file._id, file.fileName)}
-                      className="text-[#4F7C82] hover:text-[#0B2E33]"
+                      disabled={file.isAvailable === false}
+                      className="text-[#4F7C82] hover:text-[#0B2E33] disabled:opacity-40"
                     >
                       <Download size={18} />
                     </button>

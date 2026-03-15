@@ -11,6 +11,8 @@ import {
 import { AuthContext } from "../context/AuthContext";
 import Pagination from "../components/Pagination";
 import { useNavigate } from "react-router-dom";
+import { getApiErrorMessage } from "../utils/apiError";
+import { openFilePreview } from "../utils/filePreview";
 
 function Files() {
   const { user } = useContext(AuthContext);
@@ -51,7 +53,7 @@ function Files() {
   };
 
   const filteredFiles = files.filter((file) =>
-    file.fileName.toLowerCase().includes(search.toLowerCase()) &&
+    (file.fileName || "").toLowerCase().includes(search.toLowerCase()) &&
     (category ? file.category === category : true)
   );
 const handleDownload = async (id, fileName) => {
@@ -72,21 +74,28 @@ const handleDownload = async (id, fileName) => {
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (error) {
+    setMessage(await getApiErrorMessage(error, "Unable to download this file"));
     console.error("Download failed", error);
   }
 };
 
-const handleView = async (id) => {
+const handleView = async (id, fileName) => {
+  const previewWindow = window.open("about:blank", "_blank");
   try {
     const res = await axios.get(`/files/view/${id}`, {
       responseType: "blob",
     });
-
-    const fileURL = window.URL.createObjectURL(res.data);
-
-    window.open(fileURL, "_blank", "noopener,noreferrer");
-
+    const result = openFilePreview({
+      blob: res.data,
+      fileName,
+      previewWindow
+    });
+    setMessage(result.message);
   } catch (error) {
+    if (previewWindow) {
+      previewWindow.close();
+    }
+    setMessage(await getApiErrorMessage(error, "Unable to open this file"));
     console.error("View failed", error);
   }
 };
@@ -196,8 +205,9 @@ const handleView = async (id) => {
 
                   {/* VIEW - ALL ROLES */}
           <button
-  onClick={() => handleView(file._id)}
-  className="text-[#5B6D49] hover:text-[#0C3C01]"
+  onClick={() => handleView(file._id, file.fileName)}
+  disabled={file.isAvailable === false}
+  className="text-[#5B6D49] hover:text-[#0C3C01] disabled:opacity-40"
 >
   <Eye size={18} />
 </button>
@@ -206,7 +216,8 @@ const handleView = async (id) => {
                   {/* DOWNLOAD - ALL ROLES */}
                   <button
   onClick={() => handleDownload(file._id, file.fileName)}
-  className="text-[#5B6D49] hover:text-[#0C3C01]"
+  disabled={file.isAvailable === false}
+  className="text-[#5B6D49] hover:text-[#0C3C01] disabled:opacity-40"
 >
   <Download size={18} />
 </button>

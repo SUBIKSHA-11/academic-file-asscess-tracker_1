@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
 import { Search, Eye, Download } from "lucide-react";
 import Pagination from "../../components/Pagination";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { openFilePreview } from "../../utils/filePreview";
 
 function DepartmentFiles() {
   const [files, setFiles] = useState([]);
@@ -9,6 +11,7 @@ function DepartmentFiles() {
   const [category, setCategory] = useState("");
   const [department, setDepartment] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [actionMessage, setActionMessage] = useState("");
   const rowsPerPage = 8;
 
   const authConfig = useMemo(() => {
@@ -33,15 +36,24 @@ function DepartmentFiles() {
     fetchFiles();
   }, [authConfig]);
 
-  const handleView = async (id) => {
+  const handleView = async (id, fileName) => {
+    const previewWindow = window.open("about:blank", "_blank");
     try {
       const res = await axios.get(`/files/view/${id}`, {
         ...authConfig,
         responseType: "blob"
       });
-      const fileURL = window.URL.createObjectURL(res.data);
-      window.open(fileURL, "_blank", "noopener,noreferrer");
+      const result = openFilePreview({
+        blob: res.data,
+        fileName,
+        previewWindow
+      });
+      setActionMessage(result.message);
     } catch (error) {
+      if (previewWindow) {
+        previewWindow.close();
+      }
+      setActionMessage(await getApiErrorMessage(error, "Unable to open this file"));
       console.error("View failed", error);
     }
   };
@@ -64,12 +76,13 @@ function DepartmentFiles() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
+      setActionMessage(await getApiErrorMessage(error, "Unable to download this file"));
       console.error("Download failed", error);
     }
   };
 
   const filteredFiles = files.filter((file) => {
-    const bySearch = file.fileName.toLowerCase().includes(search.toLowerCase());
+    const bySearch = (file.fileName || "").toLowerCase().includes(search.toLowerCase());
     const byCategory = category ? file.category === category : true;
     const byDepartment = department ? file.department === department : true;
     return bySearch && byCategory && byDepartment;
@@ -90,6 +103,12 @@ function DepartmentFiles() {
         <h2 className="text-2xl font-bold">Department Files</h2>
         <p className="mt-1 text-slate-600">View files from all departments based on access policy.</p>
       </div>
+
+      {actionMessage && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {actionMessage}
+        </div>
+      )}
 
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 md:flex-row md:items-end md:justify-between">
         <div className="flex h-10 w-full items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 md:max-w-sm">
@@ -173,8 +192,9 @@ function DepartmentFiles() {
                   <td className="p-3 text-center">
                     <button
                       type="button"
-                      onClick={() => handleView(file._id)}
-                      className="text-[#4F7C82] hover:text-[#0B2E33]"
+                      onClick={() => handleView(file._id, file.fileName)}
+                      disabled={file.isAvailable === false}
+                      className="text-[#4F7C82] hover:text-[#0B2E33] disabled:opacity-40"
                     >
                       <Eye size={18} />
                     </button>
@@ -183,7 +203,8 @@ function DepartmentFiles() {
                     <button
                       type="button"
                       onClick={() => handleDownload(file._id, file.fileName)}
-                      className="text-[#4F7C82] hover:text-[#0B2E33]"
+                      disabled={file.isAvailable === false}
+                      className="text-[#4F7C82] hover:text-[#0B2E33] disabled:opacity-40"
                     >
                       <Download size={18} />
                     </button>

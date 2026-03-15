@@ -532,6 +532,63 @@ const getFileAnalytics = async (req, res) => {
   }
 };
 
+const isRemoteFilePath = (value) => /^https?:\/\//i.test(String(value || ""));
+const isLikelyLocalFilePath = (value) => {
+  const normalized = String(value || "").trim();
+  if (!normalized) return false;
+  return (
+    normalized.startsWith("uploads/") ||
+    normalized.startsWith("uploads\\") ||
+    /^[A-Za-z]:\\/.test(normalized) ||
+    normalized.startsWith("/") ||
+    normalized.includes("\\uploads\\")
+  );
+};
+
+const getFileStorageHealth = async (req, res) => {
+  try {
+    const files = await AcademicFile.find()
+      .select("fileName filePath status createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const summary = {
+      totalFiles: files.length,
+      remoteFiles: 0,
+      localFiles: 0,
+      unknownFiles: 0
+    };
+
+    const localFileSamples = [];
+    const unknownFileSamples = [];
+
+    for (const file of files) {
+      if (isRemoteFilePath(file.filePath)) {
+        summary.remoteFiles += 1;
+      } else if (isLikelyLocalFilePath(file.filePath)) {
+        summary.localFiles += 1;
+        if (localFileSamples.length < 10) {
+          localFileSamples.push(file);
+        }
+      } else {
+        summary.unknownFiles += 1;
+        if (unknownFileSamples.length < 10) {
+          unknownFileSamples.push(file);
+        }
+      }
+    }
+
+    res.json({
+      summary,
+      localFileSamples,
+      unknownFileSamples
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to inspect file storage health" });
+  }
+};
+
 
 
 module.exports = {
@@ -555,7 +612,8 @@ getLogsGroupedByUser,
 getMostActiveDepartment,
 getDepartments,
 addDepartment,
-getFileAnalytics
+getFileAnalytics,
+getFileStorageHealth
 
 };
 

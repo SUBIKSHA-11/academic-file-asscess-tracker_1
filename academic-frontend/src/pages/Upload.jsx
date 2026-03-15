@@ -17,18 +17,28 @@ function Upload() {
 
   const [departments, setDepartments] = useState([]);
 
-useEffect(() => {
-  fetchDepartments();
-}, []);
+  useEffect(() => {
+    let cancelled = false;
 
-const fetchDepartments = async () => {
-  try {
-    const res = await axios.get("/departments");
-    setDepartments(res.data);
-  } catch (error) {
-    setMessage("Failed to load departments");
-  }
-};
+    const loadDepartments = async () => {
+      try {
+        const res = await axios.get("/departments");
+        if (!cancelled) {
+          setDepartments(res.data);
+        }
+      } catch {
+        if (!cancelled) {
+          setMessage("Failed to load departments");
+        }
+      }
+    };
+
+    void loadDepartments();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });

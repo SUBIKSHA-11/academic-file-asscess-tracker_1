@@ -17,6 +17,8 @@ import {
   MessageSquare
 } from "lucide-react";
 import axios from "../../api/axios";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { openFilePreview } from "../../utils/filePreview";
 
 const CATEGORY_ORDER = ["NOTES", "ASSIGNMENT", "LAB", "OTHER"];
 const CATEGORY_LABELS = {
@@ -192,17 +194,32 @@ function StudentBrowseFiles() {
     }));
   }, [grouped, selectedDepartment, selectedSemester]);
 
-  const handleView = async (fileId) => {
+  const handleView = async (fileId, fileName) => {
+    const previewWindow = window.open("about:blank", "_blank");
     try {
       const token = sessionStorage.getItem("token");
       if (!token) {
+        if (previewWindow) {
+          previewWindow.close();
+        }
         setActionMessage("Session expired. Please login again.");
         return;
       }
-      const viewUrl = `${axios.defaults.baseURL}/files/view/${fileId}?token=${encodeURIComponent(token)}`;
-      window.open(viewUrl, "_blank", "noopener,noreferrer");
+      const res = await axios.get(`/files/view/${fileId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob"
+      });
+      const result = openFilePreview({
+        blob: res.data,
+        fileName,
+        previewWindow
+      });
+      setActionMessage(result.message);
     } catch (err) {
-      setActionMessage(err?.response?.data?.message || "Unable to open this file");
+      if (previewWindow) {
+        previewWindow.close();
+      }
+      setActionMessage(await getApiErrorMessage(err, "Unable to open this file"));
     }
   };
 
@@ -225,7 +242,7 @@ function StudentBrowseFiles() {
       link.remove();
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      setActionMessage(err?.response?.data?.message || "Unable to download this file");
+      setActionMessage(await getApiErrorMessage(err, "Unable to download this file"));
     }
   };
 
@@ -714,8 +731,8 @@ function StudentBrowseFiles() {
                       <div className="mt-2 flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => handleView(file._id)}
-                          disabled={!file.canAccess}
+                          onClick={() => handleView(file._id, file.fileName)}
+                          disabled={!file.canAccess || file.isAvailable === false}
                           className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
                         >
                           View
@@ -723,7 +740,7 @@ function StudentBrowseFiles() {
                         <button
                           type="button"
                           onClick={() => handleDownload(file._id, file.fileName)}
-                          disabled={!file.canAccess}
+                          disabled={!file.canAccess || file.isAvailable === false}
                           className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
                         >
                           Download
@@ -749,8 +766,8 @@ function StudentBrowseFiles() {
                       <div className="mt-2 flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => handleView(file._id)}
-                          disabled={!file.canAccess}
+                          onClick={() => handleView(file._id, file.fileName)}
+                          disabled={!file.canAccess || file.isAvailable === false}
                           className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
                         >
                           View
@@ -758,7 +775,7 @@ function StudentBrowseFiles() {
                         <button
                           type="button"
                           onClick={() => handleDownload(file._id, file.fileName)}
-                          disabled={!file.canAccess}
+                          disabled={!file.canAccess || file.isAvailable === false}
                           className="text-xs px-2 py-1 rounded border hover:bg-gray-100 disabled:opacity-50"
                         >
                           Download
@@ -944,8 +961,8 @@ function StudentBrowseFiles() {
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => handleView(file._id)}
-                                      disabled={!file.canAccess}
+                                      onClick={() => handleView(file._id, file.fileName)}
+                                      disabled={!file.canAccess || file.isAvailable === false}
                                       className="inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border hover:bg-gray-100 disabled:opacity-50"
                                     >
                                       <Eye size={14} /> View
@@ -953,7 +970,7 @@ function StudentBrowseFiles() {
                                     <button
                                       type="button"
                                       onClick={() => handleDownload(file._id, file.fileName)}
-                                      disabled={!file.canAccess}
+                                      disabled={!file.canAccess || file.isAvailable === false}
                                       className="inline-flex min-h-9 items-center justify-center gap-1 text-xs px-2 py-2 rounded border hover:bg-gray-100 disabled:opacity-50"
                                     >
                                       <Download size={14} /> Download

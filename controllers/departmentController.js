@@ -50,7 +50,7 @@ const getDepartmentStats = async (req, res) => {
         });
 
         const fileCount = await AcademicFile.countDocuments({
-          department: dept._id,
+          department: dept.name,
         });
 
         return {

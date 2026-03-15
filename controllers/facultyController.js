@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const AcademicFile = require("../models/AcademicFile");
 const FileFeedback = require("../models/FileFeedback");
 const ActivityLog = require("../models/ActivityLog");
+const { isFileAvailable } = require("../utils/fileAvailability");
 const latestFilter = {
   $or: [{ latestVersion: true }, { latestVersion: { $exists: false } }]
 };
@@ -54,7 +55,14 @@ const getMyFiles = async (req, res) => {
       .populate("uploadedBy", "name")
       .sort({ createdAt: -1 });
 
-    res.json(files);
+    res.json(
+      files
+        .map((file) => ({
+          ...file.toObject(),
+          isAvailable: isFileAvailable(file.filePath)
+        }))
+        .filter((file) => file.isAvailable)
+    );
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch faculty files" });
@@ -143,7 +151,14 @@ const getAllFiles = async (req, res) => {
       .populate("uploadedBy", "name role")
       .sort({ createdAt: -1 });
 
-    res.json(files);
+    res.json(
+      files
+        .map((file) => ({
+          ...file.toObject(),
+          isAvailable: isFileAvailable(file.filePath)
+        }))
+        .filter((file) => file.isAvailable)
+    );
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch files" });

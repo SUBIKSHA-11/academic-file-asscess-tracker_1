@@ -1,13 +1,20 @@
-import { createContext, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "../api/axios";
+import { AuthContext } from "./auth-context";
 
-export const AuthContext = createContext();
+export { AuthContext };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const hasBootstrapped = useRef(false);
 
   useEffect(() => {
+    if (hasBootstrapped.current) {
+      return;
+    }
+    hasBootstrapped.current = true;
+
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("user");
@@ -23,7 +30,8 @@ export const AuthProvider = ({ children }) => {
         const res = await axios.get("/auth/me");
         setUser(res.data);
         sessionStorage.setItem("user", JSON.stringify(res.data));
-      } catch (error) {
+      } catch {
+        // A 401 here just means the persisted session is no longer valid.
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("user");
         sessionStorage.removeItem("role");
