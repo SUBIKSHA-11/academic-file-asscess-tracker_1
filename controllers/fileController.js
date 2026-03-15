@@ -232,37 +232,41 @@ const getCloudinaryAssetMeta = (filePath) => {
 
 const fetchRemoteFileBuffer = async (file) => {
   const cloudinaryMeta = getCloudinaryAssetMeta(file.filePath);
-  const candidateUrls = [];
+  const candidateUrls = [file.filePath];
 
-  if (cloudinaryMeta?.publicIdWithExtension) {
-    candidateUrls.push(
-      cloudinary.utils.private_download_url(
-        cloudinaryMeta.publicIdWithExtension,
-        "",
-        {
-          resource_type: "raw",
-          type: "upload",
-          expires_at: Math.floor(Date.now() / 1000) + 60
-        }
-      )
-    );
+  if (useCloudinary && cloudinaryMeta) {
+    try {
+      if (cloudinaryMeta.publicIdWithExtension) {
+        candidateUrls.push(
+          cloudinary.utils.private_download_url(
+            cloudinaryMeta.publicIdWithExtension,
+            "",
+            {
+              resource_type: "raw",
+              type: "upload",
+              expires_at: Math.floor(Date.now() / 1000) + 60
+            }
+          )
+        );
+      }
+
+      if (cloudinaryMeta.publicIdWithoutExtension) {
+        candidateUrls.push(
+          cloudinary.utils.private_download_url(
+            cloudinaryMeta.publicIdWithoutExtension,
+            cloudinaryMeta.extension || path.extname(file.fileName).replace(".", "").toLowerCase(),
+            {
+              resource_type: "raw",
+              type: "upload",
+              expires_at: Math.floor(Date.now() / 1000) + 60
+            }
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Cloudinary signed URL generation failed:", error?.message || error);
+    }
   }
-
-  if (cloudinaryMeta?.publicIdWithoutExtension) {
-    candidateUrls.push(
-      cloudinary.utils.private_download_url(
-        cloudinaryMeta.publicIdWithoutExtension,
-        cloudinaryMeta.extension || path.extname(file.fileName).replace(".", "").toLowerCase(),
-        {
-          resource_type: "raw",
-          type: "upload",
-          expires_at: Math.floor(Date.now() / 1000) + 60
-        }
-      )
-    );
-  }
-
-  candidateUrls.push(file.filePath);
 
   let lastError = null;
   for (const candidateUrl of candidateUrls) {
