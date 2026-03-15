@@ -12,7 +12,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // =============================
-// DATABASE CONNECTION
+// CONNECT DATABASE
 // =============================
 connectDB();
 
@@ -31,13 +31,13 @@ app.use((req, res, next) => {
 });
 
 // =============================
-// HEALTH CHECK ROUTE
+// HEALTH CHECK (for Render)
 // =============================
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     uptime: process.uptime(),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -56,7 +56,7 @@ app.use("/api/discussions", require("./routes/fileDiscussionRoutes"));
 app.use("/api", require("./routes/departmentRoutes"));
 
 // =============================
-// ERROR HANDLER
+// GLOBAL ERROR HANDLER
 // =============================
 app.use((err, req, res, next) => {
   console.error("Unhandled server error:", err);
@@ -73,7 +73,7 @@ app.use((err, req, res, next) => {
 
   res.status(err?.status || 500).json({
     success: false,
-    message
+    message,
   });
 });
 
@@ -81,14 +81,13 @@ app.use((err, req, res, next) => {
 // SERVE FRONTEND (PRODUCTION)
 // =============================
 if (process.env.NODE_ENV === "production") {
-
   const frontendDistPath = path.join(__dirname, "academic-frontend", "dist");
 
-  // Serve static files
+  // Serve React build files
   app.use(express.static(frontendDistPath));
 
-  // React Router fallback
-  app.get("/*", (req, res) => {
+  // React Router fallback (Express 5 compatible)
+  app.use((req, res) => {
     res.sendFile(path.join(frontendDistPath, "index.html"));
   });
 }
