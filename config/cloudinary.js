@@ -22,19 +22,25 @@ const parseCloudinaryUrl = (value) => {
 
 const cloudinaryUrlConfig = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
 
+const cloudinaryUrlConfigured = Boolean(
+  cloudinaryUrlConfig.cloud_name &&
+  cloudinaryUrlConfig.api_key &&
+  cloudinaryUrlConfig.api_secret
+);
+
 const cloudinaryConfig = {
   cloud_name:
+    cloudinaryUrlConfig.cloud_name ||
     cleanEnv(process.env.CLOUD_NAME) ||
-    cleanEnv(process.env.CLOUDINARY_CLOUD_NAME) ||
-    cloudinaryUrlConfig.cloud_name,
+    cleanEnv(process.env.CLOUDINARY_CLOUD_NAME),
   api_key:
+    cloudinaryUrlConfig.api_key ||
     cleanEnv(process.env.CLOUD_API_KEY) ||
-    cleanEnv(process.env.CLOUDINARY_API_KEY) ||
-    cloudinaryUrlConfig.api_key,
+    cleanEnv(process.env.CLOUDINARY_API_KEY),
   api_secret:
+    cloudinaryUrlConfig.api_secret ||
     cleanEnv(process.env.CLOUD_API_SECRET) ||
-    cleanEnv(process.env.CLOUDINARY_API_SECRET) ||
-    cloudinaryUrlConfig.api_secret
+    cleanEnv(process.env.CLOUDINARY_API_SECRET)
 };
 
 cloudinary.config({
@@ -48,6 +54,7 @@ cloudinary.isConfigured = Boolean(
   cloudinaryConfig.api_key &&
   cloudinaryConfig.api_secret
 );
+cloudinary.configSource = cloudinaryUrlConfigured ? "CLOUDINARY_URL" : "separate_variables";
 
 cloudinary.configHelp =
   "Set CLOUD_NAME, CLOUD_API_KEY, and CLOUD_API_SECRET, or set CLOUDINARY_URL.";

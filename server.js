@@ -39,7 +39,8 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     storage: {
-      cloudinaryConfigured: Boolean(cloudinary.isConfigured)
+      cloudinaryConfigured: Boolean(cloudinary.isConfigured),
+      cloudinaryConfigSource: cloudinary.configSource
     },
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
