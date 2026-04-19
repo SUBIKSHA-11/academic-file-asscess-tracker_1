@@ -124,6 +124,7 @@ const useCloudinary = Boolean(
   process.env.CLOUD_API_KEY &&
   process.env.CLOUD_API_SECRET
 );
+const requiresCloudStorage = process.env.NODE_ENV === "production";
 
 const uploadFileToCloudinary = async (localFilePath, originalName) => {
   const extension = path.extname(originalName).replace(".", "").toLowerCase();
@@ -148,6 +149,16 @@ const uploadFile = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    if (requiresCloudStorage && !useCloudinary) {
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlink(req.file.path, () => {});
+      }
+
+      return res.status(500).json({
+        message: "Cloud file storage is not configured. Upload was not saved."
+      });
     }
 
     const uploaderId = req.user.userId;

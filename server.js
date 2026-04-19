@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -80,15 +81,24 @@ app.use((err, req, res, next) => {
 // =============================
 // SERVE FRONTEND (PRODUCTION)
 // =============================
-if (process.env.NODE_ENV === "production") {
-  const frontendDistPath = path.join(__dirname, "academic-frontend", "dist");
+const frontendDistPath = path.join(__dirname, "academic-frontend", "dist");
+const frontendIndexPath = path.join(frontendDistPath, "index.html");
 
+if (process.env.NODE_ENV === "production" || fs.existsSync(frontendIndexPath)) {
   // Serve React build files
   app.use(express.static(frontendDistPath));
 
-  // React Router fallback (Express 5 compatible)
+  // Keep missing API routes as API responses instead of returning the React app.
+  app.use("/api", (req, res) => {
+    res.status(404).json({
+      success: false,
+      message: "API route not found",
+    });
+  });
+
+  // React Router fallback for direct visits/refreshes on client-side routes.
   app.use((req, res) => {
-    res.sendFile(path.join(frontendDistPath, "index.html"));
+    res.sendFile(frontendIndexPath);
   });
 }
 
