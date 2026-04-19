@@ -197,14 +197,20 @@ const uploadFile = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Upload failed:", err?.message || err);
 
     if (req.file?.path && fs.existsSync(req.file.path)) {
       fs.unlink(req.file.path, () => {});
     }
 
+    const uploadMessage = String(err?.message || err?.error?.message || "");
+    const isCloudinaryAuthError =
+      /invalid signature|api key|api secret|cloudinary/i.test(uploadMessage);
+
     res.status(500).json({
-      message: err?.message || err?.error?.message || "Upload failed"
+      message: isCloudinaryAuthError
+        ? "Cloud storage authentication failed. Check that CLOUD_NAME, CLOUD_API_KEY, and CLOUD_API_SECRET all come from the same Cloudinary account."
+        : err?.message || err?.error?.message || "Upload failed"
     });
   }
 };

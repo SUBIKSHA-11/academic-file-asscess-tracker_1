@@ -8,6 +8,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 
 const connectDB = require("./config/db");
+const cloudinary = require("./config/cloudinary");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -37,6 +38,9 @@ app.use((req, res, next) => {
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "ok",
+    storage: {
+      cloudinaryConfigured: Boolean(cloudinary.isConfigured)
+    },
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });

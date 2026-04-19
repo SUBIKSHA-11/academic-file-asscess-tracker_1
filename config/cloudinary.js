@@ -1,14 +1,17 @@
 const { v2: cloudinary } = require("cloudinary");
 
+const cleanEnv = (value) => String(value || "").trim();
+
 const parseCloudinaryUrl = (value) => {
-  if (!value) return {};
+  const normalized = cleanEnv(value);
+  if (!normalized) return {};
 
   try {
-    const parsed = new URL(value);
+    const parsed = new URL(normalized);
     if (parsed.protocol !== "cloudinary:") return {};
 
     return {
-      cloud_name: parsed.hostname,
+      cloud_name: cleanEnv(parsed.hostname),
       api_key: decodeURIComponent(parsed.username),
       api_secret: decodeURIComponent(parsed.password)
     };
@@ -21,16 +24,16 @@ const cloudinaryUrlConfig = parseCloudinaryUrl(process.env.CLOUDINARY_URL);
 
 const cloudinaryConfig = {
   cloud_name:
-    process.env.CLOUD_NAME ||
-    process.env.CLOUDINARY_CLOUD_NAME ||
+    cleanEnv(process.env.CLOUD_NAME) ||
+    cleanEnv(process.env.CLOUDINARY_CLOUD_NAME) ||
     cloudinaryUrlConfig.cloud_name,
   api_key:
-    process.env.CLOUD_API_KEY ||
-    process.env.CLOUDINARY_API_KEY ||
+    cleanEnv(process.env.CLOUD_API_KEY) ||
+    cleanEnv(process.env.CLOUDINARY_API_KEY) ||
     cloudinaryUrlConfig.api_key,
   api_secret:
-    process.env.CLOUD_API_SECRET ||
-    process.env.CLOUDINARY_API_SECRET ||
+    cleanEnv(process.env.CLOUD_API_SECRET) ||
+    cleanEnv(process.env.CLOUDINARY_API_SECRET) ||
     cloudinaryUrlConfig.api_secret
 };
 
