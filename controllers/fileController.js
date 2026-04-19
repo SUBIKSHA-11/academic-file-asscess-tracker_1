@@ -119,11 +119,7 @@ const canAccessFile = async (user, file, action = "view") => {
   return { ok: false, status: 403, message: "You are not allowed to access this file" };
 };
 
-const useCloudinary = Boolean(
-  process.env.CLOUD_NAME &&
-  process.env.CLOUD_API_KEY &&
-  process.env.CLOUD_API_SECRET
-);
+const useCloudinary = cloudinary.isConfigured;
 const requiresCloudStorage = process.env.NODE_ENV === "production";
 
 const uploadFileToCloudinary = async (localFilePath, originalName) => {

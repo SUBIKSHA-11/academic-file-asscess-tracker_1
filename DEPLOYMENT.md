@@ -12,6 +12,14 @@ Backend:
 - `CLOUD_API_SECRET`
 - `NODE_ENV=production`
 
+Cloudinary's common variable names are also supported:
+
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Use either the `CLOUD_*` set or the `CLOUDINARY_*` set. In production, uploads are blocked unless Cloudinary is configured so files are not saved to temporary server storage.
+
 Frontend:
 
 - `VITE_API_BASE_URL`
