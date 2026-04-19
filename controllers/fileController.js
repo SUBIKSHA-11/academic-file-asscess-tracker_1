@@ -152,8 +152,8 @@ const uploadFile = async (req, res) => {
         fs.unlink(req.file.path, () => {});
       }
 
-      return res.status(500).json({
-        message: "Cloud file storage is not configured. Upload was not saved."
+      return res.status(503).json({
+        message: `Cloud file storage is not configured. Upload was not saved. ${cloudinary.configHelp}`
       });
     }
 

@@ -18,7 +18,11 @@ Cloudinary's common variable names are also supported:
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
 
-Use either the `CLOUD_*` set or the `CLOUDINARY_*` set. In production, uploads are blocked unless Cloudinary is configured so files are not saved to temporary server storage.
+You can also use Cloudinary's single URL format:
+
+- `CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME`
+
+Use the `CLOUD_*` set, the `CLOUDINARY_*` set, or `CLOUDINARY_URL`. In production, uploads are blocked unless Cloudinary is configured so files are not saved to temporary server storage.
 
 Frontend:
 

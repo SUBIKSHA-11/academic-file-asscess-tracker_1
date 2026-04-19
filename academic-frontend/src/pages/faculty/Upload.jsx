@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "../../api/axios";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 function FacultyUpload() {
   const [file, setFile] = useState(null);
@@ -84,7 +85,7 @@ function FacultyUpload() {
         sensitivity: ""
       });
     } catch (error) {
-      setMessage(error?.response?.data?.message || "Upload failed");
+      setMessage(await getApiErrorMessage(error, "Upload failed"));
     } finally {
       setLoading(false);
     }

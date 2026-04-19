@@ -1,5 +1,6 @@
 import { useState,useEffect } from "react";
 import axios from "../api/axios";
+import { getApiErrorMessage } from "../utils/apiError";
 
 function Upload() {
   const [file, setFile] = useState(null);
@@ -76,7 +77,7 @@ function Upload() {
       });
 
     } catch (error) {
-      setMessage(error?.response?.data?.message || "Upload failed");
+      setMessage(await getApiErrorMessage(error, "Upload failed"));
     }
 
     setLoading(false);
